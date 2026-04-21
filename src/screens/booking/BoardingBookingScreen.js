@@ -9,6 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { getPets } from '../../api/petApi';
 import { getBoardingAvailability, getPetBookedDates, createBoardingBooking } from '../../api/boardingApi';
+import { BOARDING_CARE_OPTIONS, BOARDING_DAILY_RATE } from '../../constants/boarding';
 
 const C = {
   primary: '#006850', primaryContainer: '#148367', onPrimaryContainer: '#effff6',
@@ -23,13 +24,6 @@ const C = {
 const PET_COLORS = ['#148367', '#8e4e14', '#9f3a21', '#006850', '#783d01'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const DAILY_RATE = 3500;
-const CARE_ADD_ONS = [
-  { key: 'meals', label: 'Meal plan', icon: 'restaurant-outline', note: 'Feeding schedule support' },
-  { key: 'medication', label: 'Medication', icon: 'medkit-outline', note: 'Reminder and dose tracking' },
-  { key: 'photoUpdates', label: 'Photo updates', icon: 'camera-outline', note: 'Daily check-in photos' },
-];
-
 const getNext14Days = () => {
   const days = [];
   for (let i = 1; i <= 14; i++) {
@@ -131,7 +125,7 @@ const BoardingBookingScreen = () => {
       await createBoardingBooking(selectedPet, selectedDates, {
         careOptions,
         specialInstructions: specialInstructions.trim(),
-        estimatedTotal: selectedDates.length * DAILY_RATE,
+        estimatedTotal: selectedDates.length * BOARDING_DAILY_RATE,
       });
       Alert.alert('🏠 Request Sent!', 'Your boarding request has been submitted and is awaiting manager approval.', [
         {
@@ -150,7 +144,7 @@ const BoardingBookingScreen = () => {
 
   const selectedPetName = pets.find(p => p._id === selectedPet)?.name ?? null;
   const canConfirm = selectedDates.length > 0 && !!selectedPet && !confirming && !loadingPetDates;
-  const estimatedTotal = selectedDates.length * DAILY_RATE;
+  const estimatedTotal = selectedDates.length * BOARDING_DAILY_RATE;
 
   const isLoading = loadingAvail || loadingPetDates;
 
@@ -346,7 +340,7 @@ const BoardingBookingScreen = () => {
           </View>
 
           <View style={styles.careGrid}>
-            {CARE_ADD_ONS.map(option => {
+            {BOARDING_CARE_OPTIONS.map(option => {
               const active = careOptions[option.key];
               return (
                 <TouchableOpacity
@@ -386,7 +380,7 @@ const BoardingBookingScreen = () => {
             <View>
               <Text style={styles.estimateLabel}>Estimated total</Text>
               <Text style={styles.estimateHint}>
-                {selectedDates.length} day{selectedDates.length > 1 ? 's' : ''} x LKR {DAILY_RATE.toLocaleString()}
+                {selectedDates.length} day{selectedDates.length > 1 ? 's' : ''} x LKR {BOARDING_DAILY_RATE.toLocaleString()}
               </Text>
             </View>
             <Text style={styles.estimateAmount}>LKR {estimatedTotal.toLocaleString()}</Text>
