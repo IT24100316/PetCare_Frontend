@@ -8,6 +8,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { getMyBookings } from '../../api/bookingApi';
 import axiosInstance from '../../api/axiosInstance';
+import { BOARDING_CARE_LABELS, formatBoardingCurrency } from '../../constants/boarding';
 
 const C = {
   primary: '#006850', primaryContainer: '#148367', onPrimaryContainer: '#effff6',
@@ -32,22 +33,11 @@ const STATUS_META = {
   Cancelled: { color: '#410002', bg: '#ffdad6', label: 'Cancelled' },
 };
 
-const CARE_LABELS = {
-  meals: 'Meal plan',
-  medication: 'Medication',
-  photoUpdates: 'Photo updates',
-};
-
 const TABS = ['Active', 'Cancelled'];
 const SERVICES = ['Vet', 'Grooming', 'Boarding'];
 
 const formatShortDate = (dateVal) =>
   new Date(dateVal).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
-
-const formatCurrency = (amount) => {
-  if (!amount) return null;
-  return `LKR ${Number(amount).toLocaleString()}`;
-};
 
 const MyBookingsScreen = () => {
   const insets = useSafeAreaInsets();
@@ -115,8 +105,8 @@ const MyBookingsScreen = () => {
     const primaryDate = item.appointmentDate || boardingDates[0];
     const selectedCare = Object.entries(item.careOptions || {})
       .filter(([, enabled]) => enabled)
-      .map(([key]) => CARE_LABELS[key] || key);
-    const estimatedTotal = formatCurrency(item.estimatedTotal);
+      .map(([key]) => BOARDING_CARE_LABELS[key] || key);
+    const estimatedTotal = formatBoardingCurrency(item.estimatedTotal);
     const isActualInstantSlot = item.isInstantSlot === true;
     const isBoarding = item.serviceType === 'Boarding';
     const canCancel = item.status === 'Pending' && !isActualInstantSlot;
