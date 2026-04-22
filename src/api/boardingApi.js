@@ -10,8 +10,12 @@ export const getPetBookedDates = async (petId) => {
   return response.data;
 };
 
-export const createBoardingBooking = async (petId, boardingDates) => {
-  const response = await axiosInstance.post('/bookings/boarding/book', { petId, boardingDates });
+export const createBoardingBooking = async (petId, boardingDates, careDetails = {}) => {
+  const response = await axiosInstance.post('/bookings/boarding/book', {
+    petId,
+    boardingDates,
+    ...careDetails,
+  });
   return response.data;
 };
 

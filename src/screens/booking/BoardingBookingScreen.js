@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, ScrollView, StatusBar,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -22,6 +23,12 @@ const C = {
 const PET_COLORS = ['#148367', '#8e4e14', '#9f3a21', '#006850', '#783d01'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DAILY_RATE = 3500;
+const CARE_ADD_ONS = [
+  { key: 'meals', label: 'Meal plan', icon: 'restaurant-outline', note: 'Feeding schedule support' },
+  { key: 'medication', label: 'Medication', icon: 'medkit-outline', note: 'Reminder and dose tracking' },
+  { key: 'photoUpdates', label: 'Photo updates', icon: 'camera-outline', note: 'Daily check-in photos' },
+];
 
 const getNext14Days = () => {
   const days = [];
@@ -50,6 +57,8 @@ const BoardingBookingScreen = () => {
   const [loadingAvail, setLoadingAvail] = useState(true);
   const [loadingPetDates, setLoadingPetDates] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [careOptions, setCareOptions] = useState({ meals: true, medication: false, photoUpdates: true });
+  const [specialInstructions, setSpecialInstructions] = useState('');
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -119,7 +128,11 @@ const BoardingBookingScreen = () => {
     if (selectedDates.length === 0 || !selectedPet) return;
     setConfirming(true);
     try {
-      await createBoardingBooking(selectedPet, selectedDates);
+      await createBoardingBooking(selectedPet, selectedDates, {
+        careOptions,
+        specialInstructions: specialInstructions.trim(),
+        estimatedTotal: selectedDates.length * DAILY_RATE,
+      });
       Alert.alert('🏠 Request Sent!', 'Your boarding request has been submitted and is awaiting manager approval.', [
         {
           text: 'Great!', onPress: () => {
@@ -137,6 +150,7 @@ const BoardingBookingScreen = () => {
 
   const selectedPetName = pets.find(p => p._id === selectedPet)?.name ?? null;
   const canConfirm = selectedDates.length > 0 && !!selectedPet && !confirming && !loadingPetDates;
+  const estimatedTotal = selectedDates.length * DAILY_RATE;
 
   const isLoading = loadingAvail || loadingPetDates;
 
@@ -324,6 +338,60 @@ const BoardingBookingScreen = () => {
             </View>
           </View>
         )}
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="heart-outline" size={17} color={C.primary} />
+            <Text style={styles.sectionLabel}>CARE PREFERENCES</Text>
+          </View>
+
+          <View style={styles.careGrid}>
+            {CARE_ADD_ONS.map(option => {
+              const active = careOptions[option.key];
+              return (
+                <TouchableOpacity
+                  key={option.key}
+                  style={[styles.careOption, active && styles.careOptionActive]}
+                  onPress={() => setCareOptions(prev => ({ ...prev, [option.key]: !prev[option.key] }))}
+                  activeOpacity={0.78}
+                >
+                  <View style={[styles.careIcon, active && styles.careIconActive]}>
+                    <Ionicons name={option.icon} size={18} color={active ? '#fff' : C.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.careTitle, active && styles.careTitleActive]}>{option.label}</Text>
+                    <Text style={[styles.careNote, active && styles.careNoteActive]}>{option.note}</Text>
+                  </View>
+                  {active && <Ionicons name="checkmark-circle" size={18} color={C.primary} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <TextInput
+            style={styles.instructionsInput}
+            placeholder="Special instructions, allergies, routines, or comfort notes"
+            placeholderTextColor={C.outline}
+            value={specialInstructions}
+            onChangeText={setSpecialInstructions}
+            multiline
+            maxLength={240}
+            textAlignVertical="top"
+          />
+          <Text style={styles.inputCounter}>{specialInstructions.length}/240</Text>
+        </View>
+
+        {selectedDates.length > 0 && (
+          <View style={styles.estimateCard}>
+            <View>
+              <Text style={styles.estimateLabel}>Estimated total</Text>
+              <Text style={styles.estimateHint}>
+                {selectedDates.length} day{selectedDates.length > 1 ? 's' : ''} x LKR {DAILY_RATE.toLocaleString()}
+              </Text>
+            </View>
+            <Text style={styles.estimateAmount}>LKR {estimatedTotal.toLocaleString()}</Text>
+          </View>
+        )}
       </ScrollView>
 
       {/* Footer */}
@@ -417,6 +485,22 @@ const styles = StyleSheet.create({
   summaryIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.secondary + '18', justifyContent: 'center', alignItems: 'center' },
   summaryTitle: { fontSize: 16, fontWeight: '800', color: C.onSurface, marginBottom: 6 },
   summaryBody: { fontSize: 14, color: C.onSurfaceVariant, lineHeight: 21 },
+
+  careGrid: { gap: 10 },
+  careOption: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.surfaceLowest, borderRadius: 16, padding: 14, borderWidth: 1.5, borderColor: C.surfaceHigh },
+  careOptionActive: { backgroundColor: C.primary + '10', borderColor: C.primary + '45' },
+  careIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.primary + '14', justifyContent: 'center', alignItems: 'center' },
+  careIconActive: { backgroundColor: C.primary },
+  careTitle: { fontSize: 14, fontWeight: '800', color: C.onSurface },
+  careTitleActive: { color: C.primary },
+  careNote: { fontSize: 11, fontWeight: '500', color: C.outline, marginTop: 2 },
+  careNoteActive: { color: C.onSurfaceVariant },
+  instructionsInput: { minHeight: 96, backgroundColor: C.surfaceLowest, borderRadius: 16, padding: 14, marginTop: 12, borderWidth: 1, borderColor: C.surfaceHigh, color: C.onSurface, fontSize: 14, lineHeight: 20 },
+  inputCounter: { alignSelf: 'flex-end', color: C.outline, fontSize: 11, marginTop: 6, fontWeight: '600' },
+  estimateCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.secondary + '12', borderRadius: 18, padding: 18, marginTop: 22, borderWidth: 1, borderColor: C.secondary + '25' },
+  estimateLabel: { fontSize: 13, fontWeight: '800', color: C.secondary },
+  estimateHint: { fontSize: 11, color: C.outline, marginTop: 3 },
+  estimateAmount: { fontSize: 18, fontWeight: '900', color: C.secondary },
 
   footer: { backgroundColor: 'rgba(250,249,248,0.97)', paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.outlineVariant + '50' },
   confirmBtn: { backgroundColor: C.secondary, height: 60, borderRadius: 99, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: C.secondary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.32, shadowRadius: 14, elevation: 8 },
