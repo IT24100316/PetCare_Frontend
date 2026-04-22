@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { getAllBoardingBookings, updateBookingStatus, getBoardingAvailability } from '../../api/boardingApi';
 import { AuthContext } from '../../context/AuthContext';
+import { BOARDING_CARE_LABELS, BOARDING_MAX_CAPACITY, formatBoardingCurrency } from '../../constants/boarding';
 
 const C = {
   primary: '#006850', primaryContainer: '#148367', onPrimaryContainer: '#effff6',
@@ -17,19 +18,12 @@ const C = {
   errorContainer: '#ffdad6', error: '#ba1a1a',
 };
 
-const MAX_CAPACITY = 20;
 const TABS = ['Pending', 'Approved', 'All'];
 
 const STATUS_CONFIG = {
   Pending:  { bg: '#fff8ed', text: '#92400e', dot: '#f59e0b' },
   Approved: { bg: '#ecfdf5', text: '#065f46', dot: '#10b981' },
   Rejected: { bg: '#fef2f2', text: '#991b1b', dot: '#ef4444' },
-};
-
-const CARE_LABELS = {
-  meals: 'Meal plan',
-  medication: 'Medication',
-  photoUpdates: 'Photo updates',
 };
 
 // Helper — get next 14 day strings
@@ -58,11 +52,6 @@ const fmtDate = (dateVal) => {
 const fmtDateFull = (dateVal) => {
   const d = new Date(dateVal);
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-};
-
-const formatCurrency = (amount) => {
-  if (!amount) return null;
-  return `LKR ${Number(amount).toLocaleString()}`;
 };
 
 const SitterDashboardScreen = () => {
@@ -156,7 +145,7 @@ const SitterDashboardScreen = () => {
       label: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
     }));
     const busiestDay = daysWithData.reduce((top, day) => day.count > top.count ? day : top, daysWithData[0]);
-    const fullDays = daysWithData.filter(day => day.count >= MAX_CAPACITY).length;
+    const fullDays = daysWithData.filter(day => day.count >= BOARDING_MAX_CAPACITY).length;
     const avgBooked = Math.round(daysWithData.reduce((sum, day) => sum + day.count, 0) / Math.max(daysWithData.length, 1));
 
     return (
@@ -186,7 +175,7 @@ const SitterDashboardScreen = () => {
             <>
               <View style={styles.capacitySummaryRow}>
                 <View style={styles.capacitySummaryItem}>
-                  <Text style={styles.capacitySummaryValue}>{busiestDay?.count || 0}/{MAX_CAPACITY}</Text>
+                  <Text style={styles.capacitySummaryValue}>{busiestDay?.count || 0}/{BOARDING_MAX_CAPACITY}</Text>
                   <Text style={styles.capacitySummaryLabel}>Busiest {busiestDay?.label || 'day'}</Text>
                 </View>
                 <View style={styles.capacitySummaryItem}>
@@ -200,9 +189,9 @@ const SitterDashboardScreen = () => {
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.capacityScroll}>
                 {daysWithData.map(({ dateStr, count, label }) => {
-                  const pct = Math.min(count / MAX_CAPACITY, 1);
-                  const isFull = count >= MAX_CAPACITY;
-                  const barColor = isFull ? '#ef4444' : count >= MAX_CAPACITY * 0.7 ? '#f59e0b' : '#10b981';
+                  const pct = Math.min(count / BOARDING_MAX_CAPACITY, 1);
+                  const isFull = count >= BOARDING_MAX_CAPACITY;
+                  const barColor = isFull ? '#ef4444' : count >= BOARDING_MAX_CAPACITY * 0.7 ? '#f59e0b' : '#10b981';
                   return (
                     <View key={dateStr} style={styles.capacityDayCol}>
                       {/* Bar */}
@@ -214,7 +203,7 @@ const SitterDashboardScreen = () => {
                       </View>
                       {/* Count */}
                       <Text style={[styles.capacityCount, isFull && { color: '#ef4444' }]}>
-                        {count}/{MAX_CAPACITY}
+                        {count}/{BOARDING_MAX_CAPACITY}
                       </Text>
                       {/* Day label */}
                       <Text style={styles.capacityDayLabel}>{label}</Text>
@@ -242,8 +231,8 @@ const SitterDashboardScreen = () => {
     const numDays = dates.length;
     const selectedCare = Object.entries(item.careOptions || {})
       .filter(([, enabled]) => enabled)
-      .map(([key]) => CARE_LABELS[key] || key);
-    const estimatedTotal = formatCurrency(item.estimatedTotal);
+      .map(([key]) => BOARDING_CARE_LABELS[key] || key);
+    const estimatedTotal = formatBoardingCurrency(item.estimatedTotal);
 
     return (
       <View style={styles.card}>
@@ -310,8 +299,8 @@ const SitterDashboardScreen = () => {
               {dates.map((d, idx) => {
                 const dateStr = new Date(d).toISOString().split('T')[0];
                 const approved = capacityMap[dateStr] || 0;
-                const nearFull = approved >= MAX_CAPACITY * 0.8;
-                const isFull = approved >= MAX_CAPACITY;
+                const nearFull = approved >= BOARDING_MAX_CAPACITY * 0.8;
+                const isFull = approved >= BOARDING_MAX_CAPACITY;
                 return (
                   <View
                     key={idx}
@@ -333,7 +322,7 @@ const SitterDashboardScreen = () => {
                     )}
                     {nearFull && !isFull && (
                       <Text style={[styles.dateChipCaption, { color: '#d97706' }]}>
-                        {approved}/{MAX_CAPACITY}
+                        {approved}/{BOARDING_MAX_CAPACITY}
                       </Text>
                     )}
                   </View>
