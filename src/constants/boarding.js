@@ -19,6 +19,18 @@ export const BOARDING_PREP_TIPS = [
   'Bring a favorite blanket or toy for comfort.',
 ];
 
+export const BOARDING_TIME_WINDOWS = [
+  'Morning',
+  'Afternoon',
+  'Evening',
+];
+
+export const BOARDING_CONTACT_METHODS = [
+  'Call',
+  'SMS',
+  'WhatsApp',
+];
+
 export const formatBoardingCurrency = (amount) => {
   if (!amount) return null;
   return `LKR ${Number(amount).toLocaleString()}`;
