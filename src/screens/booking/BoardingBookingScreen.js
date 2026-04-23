@@ -9,7 +9,12 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { getPets } from '../../api/petApi';
 import { getBoardingAvailability, getPetBookedDates, createBoardingBooking } from '../../api/boardingApi';
-import { BOARDING_CARE_OPTIONS, BOARDING_DAILY_RATE } from '../../constants/boarding';
+import {
+  BOARDING_CARE_OPTIONS,
+  BOARDING_CONTACT_METHODS,
+  BOARDING_DAILY_RATE,
+  BOARDING_TIME_WINDOWS,
+} from '../../constants/boarding';
 
 const C = {
   primary: '#006850', primaryContainer: '#148367', onPrimaryContainer: '#effff6',
@@ -52,6 +57,10 @@ const BoardingBookingScreen = () => {
   const [loadingPetDates, setLoadingPetDates] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [careOptions, setCareOptions] = useState({ meals: true, medication: false, photoUpdates: true });
+  const [arrivalWindow, setArrivalWindow] = useState(BOARDING_TIME_WINDOWS[0]);
+  const [departureWindow, setDepartureWindow] = useState(BOARDING_TIME_WINDOWS[1]);
+  const [contactMethod, setContactMethod] = useState(BOARDING_CONTACT_METHODS[0]);
+  const [emergencyContact, setEmergencyContact] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const navigation = useNavigation();
 
@@ -124,6 +133,10 @@ const BoardingBookingScreen = () => {
     try {
       await createBoardingBooking(selectedPet, selectedDates, {
         careOptions,
+        arrivalWindow,
+        departureWindow,
+        contactMethod,
+        emergencyContact: emergencyContact.trim(),
         specialInstructions: specialInstructions.trim(),
         estimatedTotal: selectedDates.length * BOARDING_DAILY_RATE,
       });
