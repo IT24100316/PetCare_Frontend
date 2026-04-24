@@ -375,6 +375,32 @@ const BoardingBookingScreen = () => {
             })}
           </View>
 
+          <Text style={styles.preferenceSubLabel}>Arrival window</Text>
+          <View style={styles.choiceRow}>
+            {BOARDING_TIME_WINDOWS.map(window => (
+              <TouchableOpacity
+                key={`arrival-${window}`}
+                style={[styles.choiceChip, arrivalWindow === window && styles.choiceChipActive]}
+                onPress={() => setArrivalWindow(window)}
+              >
+                <Text style={[styles.choiceText, arrivalWindow === window && styles.choiceTextActive]}>{window}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.preferenceSubLabel}>Departure window</Text>
+          <View style={styles.choiceRow}>
+            {BOARDING_TIME_WINDOWS.map(window => (
+              <TouchableOpacity
+                key={`departure-${window}`}
+                style={[styles.choiceChip, departureWindow === window && styles.choiceChipActive]}
+                onPress={() => setDepartureWindow(window)}
+              >
+                <Text style={[styles.choiceText, departureWindow === window && styles.choiceTextActive]}>{window}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <TextInput
             style={styles.instructionsInput}
             placeholder="Special instructions, allergies, routines, or comfort notes"
@@ -502,6 +528,12 @@ const styles = StyleSheet.create({
   careTitleActive: { color: C.primary },
   careNote: { fontSize: 11, fontWeight: '500', color: C.outline, marginTop: 2 },
   careNoteActive: { color: C.onSurfaceVariant },
+  preferenceSubLabel: { fontSize: 12, fontWeight: '800', color: C.onSurfaceVariant, marginTop: 16, marginBottom: 8 },
+  choiceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  choiceChip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 99, backgroundColor: C.surfaceLowest, borderWidth: 1, borderColor: C.surfaceHigh },
+  choiceChipActive: { backgroundColor: C.primary, borderColor: C.primary },
+  choiceText: { fontSize: 12, fontWeight: '800', color: C.outline },
+  choiceTextActive: { color: '#fff' },
   instructionsInput: { minHeight: 96, backgroundColor: C.surfaceLowest, borderRadius: 16, padding: 14, marginTop: 12, borderWidth: 1, borderColor: C.surfaceHigh, color: C.onSurface, fontSize: 14, lineHeight: 20 },
   inputCounter: { alignSelf: 'flex-end', color: C.outline, fontSize: 11, marginTop: 6, fontWeight: '600' },
   estimateCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.secondary + '12', borderRadius: 18, padding: 18, marginTop: 22, borderWidth: 1, borderColor: C.secondary + '25' },
