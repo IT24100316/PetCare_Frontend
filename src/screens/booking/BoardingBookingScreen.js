@@ -401,6 +401,28 @@ const BoardingBookingScreen = () => {
             ))}
           </View>
 
+          <Text style={styles.preferenceSubLabel}>Preferred contact</Text>
+          <View style={styles.choiceRow}>
+            {BOARDING_CONTACT_METHODS.map(method => (
+              <TouchableOpacity
+                key={`contact-${method}`}
+                style={[styles.choiceChip, contactMethod === method && styles.choiceChipActive]}
+                onPress={() => setContactMethod(method)}
+              >
+                <Text style={[styles.choiceText, contactMethod === method && styles.choiceTextActive]}>{method}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TextInput
+            style={styles.singleLineInput}
+            placeholder="Emergency contact name and phone"
+            placeholderTextColor={C.outline}
+            value={emergencyContact}
+            onChangeText={setEmergencyContact}
+            maxLength={80}
+          />
+
           <TextInput
             style={styles.instructionsInput}
             placeholder="Special instructions, allergies, routines, or comfort notes"
@@ -534,6 +556,7 @@ const styles = StyleSheet.create({
   choiceChipActive: { backgroundColor: C.primary, borderColor: C.primary },
   choiceText: { fontSize: 12, fontWeight: '800', color: C.outline },
   choiceTextActive: { color: '#fff' },
+  singleLineInput: { height: 50, backgroundColor: C.surfaceLowest, borderRadius: 16, paddingHorizontal: 14, marginTop: 12, borderWidth: 1, borderColor: C.surfaceHigh, color: C.onSurface, fontSize: 14 },
   instructionsInput: { minHeight: 96, backgroundColor: C.surfaceLowest, borderRadius: 16, padding: 14, marginTop: 12, borderWidth: 1, borderColor: C.surfaceHigh, color: C.onSurface, fontSize: 14, lineHeight: 20 },
   inputCounter: { alignSelf: 'flex-end', color: C.outline, fontSize: 11, marginTop: 6, fontWeight: '600' },
   estimateCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.secondary + '12', borderRadius: 18, padding: 18, marginTop: 22, borderWidth: 1, borderColor: C.secondary + '25' },
