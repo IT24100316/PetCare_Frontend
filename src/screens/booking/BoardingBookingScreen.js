@@ -13,6 +13,7 @@ import {
   BOARDING_CARE_OPTIONS,
   BOARDING_CONTACT_METHODS,
   BOARDING_DAILY_RATE,
+  BOARDING_PREP_TIPS,
   BOARDING_TIME_WINDOWS,
 } from '../../constants/boarding';
 
@@ -447,6 +448,19 @@ const BoardingBookingScreen = () => {
             <Text style={styles.estimateAmount}>LKR {estimatedTotal.toLocaleString()}</Text>
           </View>
         )}
+
+        <View style={styles.tipsCard}>
+          <View style={styles.tipsHeader}>
+            <Ionicons name="bag-handle-outline" size={16} color={C.secondary} />
+            <Text style={styles.tipsTitle}>Boarding prep checklist</Text>
+          </View>
+          {BOARDING_PREP_TIPS.map(tip => (
+            <View key={tip} style={styles.tipRow}>
+              <Ionicons name="checkmark-circle-outline" size={14} color={C.primary} />
+              <Text style={styles.tipText}>{tip}</Text>
+            </View>
+          ))}
+        </View>
       </ScrollView>
 
       {/* Footer */}
@@ -563,6 +577,11 @@ const styles = StyleSheet.create({
   estimateLabel: { fontSize: 13, fontWeight: '800', color: C.secondary },
   estimateHint: { fontSize: 11, color: C.outline, marginTop: 3 },
   estimateAmount: { fontSize: 18, fontWeight: '900', color: C.secondary },
+  tipsCard: { backgroundColor: C.surfaceLow, borderRadius: 18, padding: 16, marginTop: 18, gap: 8 },
+  tipsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  tipsTitle: { fontSize: 14, fontWeight: '800', color: C.secondary },
+  tipRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tipText: { flex: 1, fontSize: 12, lineHeight: 18, color: C.onSurfaceVariant, fontWeight: '600' },
 
   footer: { backgroundColor: 'rgba(250,249,248,0.97)', paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.outlineVariant + '50' },
   confirmBtn: { backgroundColor: C.secondary, height: 60, borderRadius: 99, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: C.secondary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.32, shadowRadius: 14, elevation: 8 },
