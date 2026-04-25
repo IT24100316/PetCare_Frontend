@@ -130,6 +130,10 @@ const BoardingBookingScreen = () => {
 
   const handleConfirm = async () => {
     if (selectedDates.length === 0 || !selectedPet) return;
+    if (careOptions.medication && emergencyContact.trim().length < 6) {
+      Alert.alert('Emergency contact needed', 'Please add an emergency contact when medication care is selected.');
+      return;
+    }
     setConfirming(true);
     try {
       await createBoardingBooking(selectedPet, selectedDates, {
@@ -157,7 +161,8 @@ const BoardingBookingScreen = () => {
   };
 
   const selectedPetName = pets.find(p => p._id === selectedPet)?.name ?? null;
-  const canConfirm = selectedDates.length > 0 && !!selectedPet && !confirming && !loadingPetDates;
+  const needsMedicationContact = careOptions.medication && emergencyContact.trim().length < 6;
+  const canConfirm = selectedDates.length > 0 && !!selectedPet && !confirming && !loadingPetDates && !needsMedicationContact;
   const estimatedTotal = selectedDates.length * BOARDING_DAILY_RATE;
 
   const isLoading = loadingAvail || loadingPetDates;
@@ -423,6 +428,9 @@ const BoardingBookingScreen = () => {
             onChangeText={setEmergencyContact}
             maxLength={80}
           />
+          {needsMedicationContact && (
+            <Text style={styles.validationText}>Medication care needs an emergency contact.</Text>
+          )}
 
           <TextInput
             style={styles.instructionsInput}
@@ -571,6 +579,7 @@ const styles = StyleSheet.create({
   choiceText: { fontSize: 12, fontWeight: '800', color: C.outline },
   choiceTextActive: { color: '#fff' },
   singleLineInput: { height: 50, backgroundColor: C.surfaceLowest, borderRadius: 16, paddingHorizontal: 14, marginTop: 12, borderWidth: 1, borderColor: C.surfaceHigh, color: C.onSurface, fontSize: 14 },
+  validationText: { color: C.error, fontSize: 11, fontWeight: '700', marginTop: 6 },
   instructionsInput: { minHeight: 96, backgroundColor: C.surfaceLowest, borderRadius: 16, padding: 14, marginTop: 12, borderWidth: 1, borderColor: C.surfaceHigh, color: C.onSurface, fontSize: 14, lineHeight: 20 },
   inputCounter: { alignSelf: 'flex-end', color: C.outline, fontSize: 11, marginTop: 6, fontWeight: '600' },
   estimateCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.secondary + '12', borderRadius: 18, padding: 18, marginTop: 22, borderWidth: 1, borderColor: C.secondary + '25' },
