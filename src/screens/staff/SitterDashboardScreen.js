@@ -265,8 +265,16 @@ const SitterDashboardScreen = () => {
           </View>
         </View>
 
-        {(selectedCare.length > 0 || item.specialInstructions || estimatedTotal) && (
+        {(selectedCare.length > 0 || item.specialInstructions || estimatedTotal || item.arrivalWindow || item.departureWindow) && (
           <View style={styles.careDetailsBox}>
+            {(item.arrivalWindow || item.departureWindow) && (
+              <View style={styles.handoverRow}>
+                <Ionicons name="time-outline" size={12} color={C.secondary} />
+                <Text style={styles.handoverText}>
+                  {item.arrivalWindow || 'Anytime'} arrival / {item.departureWindow || 'Anytime'} departure
+                </Text>
+              </View>
+            )}
             {selectedCare.length > 0 && (
               <View style={styles.careChipRow}>
                 {selectedCare.map(label => (
@@ -507,6 +515,8 @@ const styles = StyleSheet.create({
   careChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   careChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.primary + '10', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 },
   careChipText: { fontSize: 10, fontWeight: '800', color: C.primary },
+  handoverRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  handoverText: { fontSize: 11, fontWeight: '800', color: C.secondary },
   instructionsText: { fontSize: 12, lineHeight: 18, color: C.onSurfaceVariant, fontWeight: '500' },
   estimateText: { fontSize: 11, fontWeight: '800', color: C.secondary },
 
