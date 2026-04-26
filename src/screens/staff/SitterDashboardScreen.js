@@ -265,7 +265,7 @@ const SitterDashboardScreen = () => {
           </View>
         </View>
 
-        {(selectedCare.length > 0 || item.specialInstructions || estimatedTotal || item.arrivalWindow || item.departureWindow) && (
+        {(selectedCare.length > 0 || item.specialInstructions || estimatedTotal || item.arrivalWindow || item.departureWindow || item.contactMethod || item.emergencyContact) && (
           <View style={styles.careDetailsBox}>
             {(item.arrivalWindow || item.departureWindow) && (
               <View style={styles.handoverRow}>
@@ -283,6 +283,14 @@ const SitterDashboardScreen = () => {
                     <Text style={styles.careChipText}>{label}</Text>
                   </View>
                 ))}
+              </View>
+            )}
+            {(item.contactMethod || item.emergencyContact) && (
+              <View style={styles.contactRow}>
+                <Ionicons name="call-outline" size={12} color={C.primary} />
+                <Text style={styles.contactText}>
+                  {item.contactMethod || 'Contact'}{item.emergencyContact ? `: ${item.emergencyContact}` : ''}
+                </Text>
               </View>
             )}
             {!!item.specialInstructions && (
@@ -517,6 +525,8 @@ const styles = StyleSheet.create({
   careChipText: { fontSize: 10, fontWeight: '800', color: C.primary },
   handoverRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   handoverText: { fontSize: 11, fontWeight: '800', color: C.secondary },
+  contactRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  contactText: { flex: 1, fontSize: 11, fontWeight: '700', color: C.onSurfaceVariant },
   instructionsText: { fontSize: 12, lineHeight: 18, color: C.onSurfaceVariant, fontWeight: '500' },
   estimateText: { fontSize: 11, fontWeight: '800', color: C.secondary },
 
