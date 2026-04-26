@@ -26,6 +26,12 @@ const STATUS_CONFIG = {
   Rejected: { bg: '#fef2f2', text: '#991b1b', dot: '#ef4444' },
 };
 
+const CARE_LABELS = {
+  meals: 'Meal plan',
+  medication: 'Medication',
+  photoUpdates: 'Photo updates',
+};
+
 // Helper — get next 14 day strings
 const getNext14DayStrings = () => {
   const days = [];
@@ -52,6 +58,11 @@ const fmtDate = (dateVal) => {
 const fmtDateFull = (dateVal) => {
   const d = new Date(dateVal);
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
+const formatCurrency = (amount) => {
+  if (!amount) return null;
+  return `LKR ${Number(amount).toLocaleString()}`;
 };
 
 const SitterDashboardScreen = () => {
@@ -144,6 +155,9 @@ const SitterDashboardScreen = () => {
       count: capacityMap[dateStr] || 0,
       label: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
     }));
+    const busiestDay = daysWithData.reduce((top, day) => day.count > top.count ? day : top, daysWithData[0]);
+    const fullDays = daysWithData.filter(day => day.count >= MAX_CAPACITY).length;
+    const avgBooked = Math.round(daysWithData.reduce((sum, day) => sum + day.count, 0) / Math.max(daysWithData.length, 1));
 
     return (
       <View style={styles.capacityPanel}>
@@ -169,35 +183,51 @@ const SitterDashboardScreen = () => {
           capacityLoading ? (
             <ActivityIndicator color={C.primaryFixedDim} style={{ marginVertical: 12 }} />
           ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.capacityScroll}>
-              {daysWithData.map(({ dateStr, count, label }) => {
-                const pct = Math.min(count / MAX_CAPACITY, 1);
-                const isFull = count >= MAX_CAPACITY;
-                const barColor = isFull ? '#ef4444' : count >= MAX_CAPACITY * 0.7 ? '#f59e0b' : '#10b981';
-                return (
-                  <View key={dateStr} style={styles.capacityDayCol}>
-                    {/* Bar */}
-                    <View style={styles.capacityBarBg}>
-                      <View style={[
-                        styles.capacityBarFill,
-                        { height: `${Math.max(pct * 100, 3)}%`, backgroundColor: barColor },
-                      ]} />
-                    </View>
-                    {/* Count */}
-                    <Text style={[styles.capacityCount, isFull && { color: '#ef4444' }]}>
-                      {count}/{MAX_CAPACITY}
-                    </Text>
-                    {/* Day label */}
-                    <Text style={styles.capacityDayLabel}>{label}</Text>
-                    {isFull && (
-                      <View style={styles.fullPill}>
-                        <Text style={styles.fullPillText}>FULL</Text>
+            <>
+              <View style={styles.capacitySummaryRow}>
+                <View style={styles.capacitySummaryItem}>
+                  <Text style={styles.capacitySummaryValue}>{busiestDay?.count || 0}/{MAX_CAPACITY}</Text>
+                  <Text style={styles.capacitySummaryLabel}>Busiest {busiestDay?.label || 'day'}</Text>
+                </View>
+                <View style={styles.capacitySummaryItem}>
+                  <Text style={styles.capacitySummaryValue}>{avgBooked}</Text>
+                  <Text style={styles.capacitySummaryLabel}>Avg booked</Text>
+                </View>
+                <View style={styles.capacitySummaryItem}>
+                  <Text style={[styles.capacitySummaryValue, fullDays > 0 && { color: '#fca5a5' }]}>{fullDays}</Text>
+                  <Text style={styles.capacitySummaryLabel}>Full days</Text>
+                </View>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.capacityScroll}>
+                {daysWithData.map(({ dateStr, count, label }) => {
+                  const pct = Math.min(count / MAX_CAPACITY, 1);
+                  const isFull = count >= MAX_CAPACITY;
+                  const barColor = isFull ? '#ef4444' : count >= MAX_CAPACITY * 0.7 ? '#f59e0b' : '#10b981';
+                  return (
+                    <View key={dateStr} style={styles.capacityDayCol}>
+                      {/* Bar */}
+                      <View style={styles.capacityBarBg}>
+                        <View style={[
+                          styles.capacityBarFill,
+                          { height: `${Math.max(pct * 100, 3)}%`, backgroundColor: barColor },
+                        ]} />
                       </View>
-                    )}
-                  </View>
-                );
-              })}
-            </ScrollView>
+                      {/* Count */}
+                      <Text style={[styles.capacityCount, isFull && { color: '#ef4444' }]}>
+                        {count}/{MAX_CAPACITY}
+                      </Text>
+                      {/* Day label */}
+                      <Text style={styles.capacityDayLabel}>{label}</Text>
+                      {isFull && (
+                        <View style={styles.fullPill}>
+                          <Text style={styles.fullPillText}>FULL</Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </>
           )
         )}
       </View>
@@ -210,6 +240,10 @@ const SitterDashboardScreen = () => {
     const petInitial = item.petId?.name?.charAt(0).toUpperCase() || '?';
     const dates = item.boardingDates || [];
     const numDays = dates.length;
+    const selectedCare = Object.entries(item.careOptions || {})
+      .filter(([, enabled]) => enabled)
+      .map(([key]) => CARE_LABELS[key] || key);
+    const estimatedTotal = formatCurrency(item.estimatedTotal);
 
     return (
       <View style={styles.card}>
@@ -241,6 +275,29 @@ const SitterDashboardScreen = () => {
             </Text>
           </View>
         </View>
+
+        {(selectedCare.length > 0 || item.specialInstructions || estimatedTotal) && (
+          <View style={styles.careDetailsBox}>
+            {selectedCare.length > 0 && (
+              <View style={styles.careChipRow}>
+                {selectedCare.map(label => (
+                  <View key={label} style={styles.careChip}>
+                    <Ionicons name="heart-outline" size={11} color={C.primary} />
+                    <Text style={styles.careChipText}>{label}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            {!!item.specialInstructions && (
+              <Text style={styles.instructionsText} numberOfLines={3}>
+                {item.specialInstructions}
+              </Text>
+            )}
+            {!!estimatedTotal && (
+              <Text style={styles.estimateText}>{estimatedTotal} estimated stay value</Text>
+            )}
+          </View>
+        )}
 
         {/* Requested dates — chips */}
         {numDays > 0 && (
@@ -426,6 +483,10 @@ const styles = StyleSheet.create({
   capacityHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   capacityIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(120,216,184,0.18)', justifyContent: 'center', alignItems: 'center' },
   capacityTitle: { fontSize: 13, fontWeight: '700', color: C.primaryFixedDim },
+  capacitySummaryRow: { flexDirection: 'row', marginHorizontal: 14, marginBottom: 12, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' },
+  capacitySummaryItem: { flex: 1, paddingVertical: 10, alignItems: 'center' },
+  capacitySummaryValue: { fontSize: 16, fontWeight: '800', color: '#fff' },
+  capacitySummaryLabel: { fontSize: 9, color: 'rgba(120,216,184,0.72)', fontWeight: '700', marginTop: 2, textTransform: 'uppercase' },
   capacityScroll: { paddingHorizontal: 14, paddingBottom: 14, gap: 8 },
   capacityDayCol: { alignItems: 'center', width: 52, gap: 4 },
   capacityBarBg: { width: 24, height: 60, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, justifyContent: 'flex-end', overflow: 'hidden' },
@@ -452,6 +513,13 @@ const styles = StyleSheet.create({
   ownerText: { fontSize: 13, color: C.onSurfaceVariant, fontWeight: '500', flex: 1 },
   durationBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.primary + '12', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
   durationText: { fontSize: 11, fontWeight: '700', color: C.primary },
+
+  careDetailsBox: { marginHorizontal: 16, marginTop: 8, marginBottom: 4, backgroundColor: C.surfaceLow, borderRadius: 14, padding: 12, gap: 8 },
+  careChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  careChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.primary + '10', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 },
+  careChipText: { fontSize: 10, fontWeight: '800', color: C.primary },
+  instructionsText: { fontSize: 12, lineHeight: 18, color: C.onSurfaceVariant, fontWeight: '500' },
+  estimateText: { fontSize: 11, fontWeight: '800', color: C.secondary },
 
   // Dates section
   datesSection: { paddingHorizontal: 16, paddingBottom: 12, paddingTop: 6 },
