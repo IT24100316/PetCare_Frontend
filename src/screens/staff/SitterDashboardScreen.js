@@ -233,6 +233,7 @@ const SitterDashboardScreen = () => {
       .filter(([, enabled]) => enabled)
       .map(([key]) => BOARDING_CARE_LABELS[key] || key);
     const estimatedTotal = formatBoardingCurrency(item.estimatedTotal);
+    const needsMedication = item.careOptions?.medication === true;
 
     return (
       <View style={styles.card}>
@@ -250,6 +251,13 @@ const SitterDashboardScreen = () => {
             <Text style={[styles.statusText, { color: sc.text }]}>{item.status}</Text>
           </View>
         </View>
+
+        {needsMedication && (
+          <View style={styles.priorityBanner}>
+            <Ionicons name="medkit-outline" size={13} color={C.error} />
+            <Text style={styles.priorityText}>Medication care requested</Text>
+          </View>
+        )}
 
         <View style={styles.cardDivider} />
 
@@ -511,6 +519,8 @@ const styles = StyleSheet.create({
   statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { fontSize: 12, fontWeight: '700' },
+  priorityBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.errorContainer, marginHorizontal: 16, marginBottom: 10, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 },
+  priorityText: { fontSize: 11, fontWeight: '800', color: C.error },
   cardDivider: { height: 1, backgroundColor: C.surfaceHigh, marginHorizontal: 16 },
 
   // Owner row
