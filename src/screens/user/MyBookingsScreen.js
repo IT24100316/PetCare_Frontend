@@ -145,6 +145,15 @@ const MyBookingsScreen = () => {
 
         {isBoarding && (
           <View style={styles.boardingDetails}>
+            {(item.arrivalWindow || item.departureWindow) && (
+              <View style={styles.handoverRow}>
+                <Ionicons name="time-outline" size={12} color={SERVICE_META.Boarding.color} />
+                <Text style={styles.handoverText}>
+                  {item.arrivalWindow || 'Anytime'} arrival / {item.departureWindow || 'Anytime'} departure
+                </Text>
+              </View>
+            )}
+
             {boardingDates.length > 0 && (
               <View style={styles.boardingDateRow}>
                 {boardingDates.map(dateVal => (
@@ -402,6 +411,8 @@ const styles = StyleSheet.create({
   boardingDateRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   boardingDateChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: SERVICE_META.Boarding.bg, borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 },
   boardingDateText: { fontSize: 11, fontWeight: '800', color: SERVICE_META.Boarding.color },
+  handoverRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  handoverText: { fontSize: 11, fontWeight: '800', color: SERVICE_META.Boarding.color },
   careTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   careTag: { fontSize: 10, fontWeight: '800', color: C.primary, backgroundColor: C.primary + '10', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 },
   instructionsText: { fontSize: 12, lineHeight: 18, color: C.onSurfaceVariant, backgroundColor: C.surfaceLow, borderRadius: 10, padding: 10 },
