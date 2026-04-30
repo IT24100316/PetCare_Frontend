@@ -32,8 +32,22 @@ const STATUS_META = {
   Cancelled: { color: '#410002', bg: '#ffdad6', label: 'Cancelled' },
 };
 
+const CARE_LABELS = {
+  meals: 'Meal plan',
+  medication: 'Medication',
+  photoUpdates: 'Photo updates',
+};
+
 const TABS = ['Active', 'Cancelled'];
 const SERVICES = ['Vet', 'Grooming', 'Boarding'];
+
+const formatShortDate = (dateVal) =>
+  new Date(dateVal).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+const formatCurrency = (amount) => {
+  if (!amount) return null;
+  return `LKR ${Number(amount).toLocaleString()}`;
+};
 
 const MyBookingsScreen = () => {
   const insets = useSafeAreaInsets();
@@ -97,10 +111,14 @@ const MyBookingsScreen = () => {
 
   const renderBookingCard = (item) => {
     const statusMeta = STATUS_META[item.status] || { color: C.outline, bg: C.surfaceHigh, label: item.status };
-    const date = item.appointmentDate
-      ? new Date(item.appointmentDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
-      : 'N/A';
+    const boardingDates = item.boardingDates || [];
+    const primaryDate = item.appointmentDate || boardingDates[0];
+    const selectedCare = Object.entries(item.careOptions || {})
+      .filter(([, enabled]) => enabled)
+      .map(([key]) => CARE_LABELS[key] || key);
+    const estimatedTotal = formatCurrency(item.estimatedTotal);
     const isActualInstantSlot = item.isInstantSlot === true;
+    const isBoarding = item.serviceType === 'Boarding';
     const canCancel = item.status === 'Pending' && !isActualInstantSlot;
 
     return (
@@ -109,16 +127,20 @@ const MyBookingsScreen = () => {
         <View style={styles.cardTop}>
           <View style={styles.cardDateSection}>
             <Text style={styles.cardDateDay}>
-              {item.appointmentDate ? new Date(item.appointmentDate).getUTCDate() : '--'}
+              {primaryDate ? new Date(primaryDate).getUTCDate() : '--'}
             </Text>
             <Text style={styles.cardDateMonth}>
-              {item.appointmentDate
-                ? new Date(item.appointmentDate).toLocaleString('default', { month: 'short', timeZone: 'UTC' }).toUpperCase()
+              {primaryDate
+                ? new Date(primaryDate).toLocaleString('default', { month: 'short', timeZone: 'UTC' }).toUpperCase()
                 : '---'}
             </Text>
           </View>
           <View style={styles.cardMainInfo}>
-            <Text style={styles.cardTime}>{item.timeSlot || 'Time N/A'}</Text>
+            <Text style={styles.cardTime}>
+              {isBoarding
+                ? `${boardingDates.length || 1} day boarding stay`
+                : item.timeSlot || 'Time N/A'}
+            </Text>
             {item.petId?.name && (
               <View style={styles.petPill}>
                 <Ionicons name="paw" size={11} color={C.primary} />
@@ -130,6 +152,37 @@ const MyBookingsScreen = () => {
             <Text style={[styles.statusText, { color: statusMeta.color }]}>{statusMeta.label}</Text>
           </View>
         </View>
+
+        {isBoarding && (
+          <View style={styles.boardingDetails}>
+            {boardingDates.length > 0 && (
+              <View style={styles.boardingDateRow}>
+                {boardingDates.map(dateVal => (
+                  <View key={dateVal} style={styles.boardingDateChip}>
+                    <MaterialIcons name="hotel" size={12} color={SERVICE_META.Boarding.color} />
+                    <Text style={styles.boardingDateText}>{formatShortDate(dateVal)}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {selectedCare.length > 0 && (
+              <View style={styles.careTagRow}>
+                {selectedCare.map(label => (
+                  <Text key={label} style={styles.careTag}>{label}</Text>
+                ))}
+              </View>
+            )}
+
+            {!!item.specialInstructions && (
+              <Text style={styles.instructionsText} numberOfLines={2}>{item.specialInstructions}</Text>
+            )}
+
+            {!!estimatedTotal && (
+              <Text style={styles.estimateText}>{estimatedTotal} estimated total</Text>
+            )}
+          </View>
+        )}
 
         {/* Instant slot warning */}
         {isActualInstantSlot && item.status === 'Pending' && (
@@ -354,6 +407,15 @@ const styles = StyleSheet.create({
   petPillText: { fontSize: 11, fontWeight: '700', color: C.primary },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
   statusText: { fontSize: 11, fontWeight: '800' },
+
+  boardingDetails: { paddingHorizontal: 14, paddingBottom: 12, gap: 8 },
+  boardingDateRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  boardingDateChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: SERVICE_META.Boarding.bg, borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 },
+  boardingDateText: { fontSize: 11, fontWeight: '800', color: SERVICE_META.Boarding.color },
+  careTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  careTag: { fontSize: 10, fontWeight: '800', color: C.primary, backgroundColor: C.primary + '10', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 },
+  instructionsText: { fontSize: 12, lineHeight: 18, color: C.onSurfaceVariant, backgroundColor: C.surfaceLow, borderRadius: 10, padding: 10 },
+  estimateText: { fontSize: 12, fontWeight: '800', color: C.secondary },
 
   instantBar: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
