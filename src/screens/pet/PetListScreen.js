@@ -240,7 +240,7 @@ const PetListScreen = () => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ProductList')}>
-          <MaterialIcons name="shopping_bag" size={24} color="rgba(26,28,28,0.6)" />
+          <MaterialIcons name="shopping-bag" size={24} color="rgba(26,28,28,0.6)" />
           <Text style={styles.navText}>Shop</Text>
         </TouchableOpacity>
 
