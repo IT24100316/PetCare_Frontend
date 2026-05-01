@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Platform, StatusBar } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -12,42 +12,48 @@ const WelcomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      
-      {/* Top Section / Hero */}
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+      {/* Top Section / Hero Image */}
       <View style={styles.topSection}>
-        {/* New unified Hero Subject Image (includes background and cat) */}
-        <Image 
-          source={require('../../../assets/images/hero_cat.jpg')}
+        <Image
+          source={require('../../../assets/images/dog.jpg')}
           style={styles.heroImage}
-          resizeMode='cover'
+          resizeMode="cover"
         />
+        {/* Subtle overlay to ensure the image blends nicely */}
+        <View style={styles.imageOverlay} />
       </View>
 
       {/* Bottom Content Section */}
-      <View style={styles.bottomSection}>
-        
-        {/* Removed Pagination Dots as there is no swipe functionality */}
+      <View style={[styles.bottomSection, { paddingBottom: Math.max(insets.bottom + 20, 40) }]}>
 
-        {/* Text Content */}
+        {/* Decorative Handle */}
+        <View style={styles.handleBar} />
+
         <View style={styles.textContainer}>
-          <Text style={styles.title}>Start Your Journey as a Thoughtful Pet Parent</Text>
-          <Text style={styles.subtitle}>Begin a meaningful journey of care, connection, and responsibility.</Text>
+          <View style={styles.badgeContainer}>
+            <MaterialIcons name="stars" size={16} color="#F5A623" />
+            <Text style={styles.badgeText}>Premium Care</Text>
+          </View>
+
+          <Text style={styles.title}>Begin a Loving Journey with Your Pet</Text>
+          <Text style={styles.subtitle}>Step into a journey of care, trust, and responsibility with your best friend.</Text>
         </View>
 
         {/* Action Button */}
-        <TouchableOpacity 
-          style={styles.button} 
+        <TouchableOpacity
+          style={styles.button}
           onPress={() => navigation.navigate('Login')}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Get Started</Text>
+          <Text style={styles.buttonText}>Start Your Journey</Text>
           <View style={styles.iconWrapper}>
-            <Ionicons name='paw' size={24} color="#f9b256" />
+            <Ionicons name="arrow-forward" size={24} color="#1A1C1C" />
           </View>
         </TouchableOpacity>
 
       </View>
-
     </View>
   );
 };
@@ -55,76 +61,109 @@ const WelcomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#1A1C1C', // Deep premium dark background
   },
   topSection: {
-    height: height * 0.55,
-    backgroundColor: '#f6ab49',
+    height: height * 0.58,
     width: '100%',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
+    backgroundColor: '#1A1C1C',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(26,28,28,0.3)', // Darken image slightly for premium feel
+  },
   bottomSection: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    marginTop: -30, // Overlap the top section smoothly
-    borderTopLeftRadius: 30, // Emulates the top arch/overlay without importing SVGs
-    borderTopRightRadius: 30,
+    backgroundColor: '#1A1C1C',
+    marginTop: -40, // Overlap the image
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
     alignItems: 'center',
-    paddingHorizontal: 30,
-    paddingTop: 30,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 30,
+    paddingHorizontal: 32,
+    paddingTop: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  handleBar: {
+    width: 40,
+    height: 5,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 3,
+    marginBottom: 32,
   },
   textContainer: {
     flex: 1,
     alignItems: 'center',
+    width: '100%',
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(245, 166, 35, 0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 24,
+    gap: 6,
+  },
+  badgeText: {
+    color: '#F5A623',
+    fontWeight: '700',
+    fontSize: 13,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1f2937', // gray-800
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#FFFFFF',
     textAlign: 'center',
-    lineHeight: 36,
+    lineHeight: 40,
     marginBottom: 16,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280', // gray-500
+    color: '#A0AABB', // Soft blue-gray
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 10,
+    fontWeight: '500',
   },
   button: {
     flexDirection: 'row',
-    backgroundColor: '#f9b256',
+    backgroundColor: '#F5A623', // Vibrant Gold/Amber
     width: '100%',
     height: 64,
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingLeft: 24,
-    paddingRight: 6,
-    shadowColor: '#f9b256',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    paddingLeft: 28,
+    paddingRight: 8,
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   buttonText: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    color: '#1A1C1C',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   iconWrapper: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#ffffff',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
