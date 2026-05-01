@@ -98,7 +98,7 @@ const MyBookingsScreen = () => {
   const renderBookingCard = (item) => {
     const statusMeta = STATUS_META[item.status] || { color: C.outline, bg: C.surfaceHigh, label: item.status };
     const date = item.appointmentDate
-      ? new Date(item.appointmentDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+      ? new Date(item.appointmentDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
       : 'N/A';
     const isActualInstantSlot = item.isInstantSlot === true;
     const canCancel = item.status === 'Pending' && !isActualInstantSlot;
@@ -109,11 +109,11 @@ const MyBookingsScreen = () => {
         <View style={styles.cardTop}>
           <View style={styles.cardDateSection}>
             <Text style={styles.cardDateDay}>
-              {item.appointmentDate ? new Date(item.appointmentDate).getDate() : '--'}
+              {item.appointmentDate ? new Date(item.appointmentDate).getUTCDate() : '--'}
             </Text>
             <Text style={styles.cardDateMonth}>
               {item.appointmentDate
-                ? new Date(item.appointmentDate).toLocaleString('default', { month: 'short' }).toUpperCase()
+                ? new Date(item.appointmentDate).toLocaleString('default', { month: 'short', timeZone: 'UTC' }).toUpperCase()
                 : '---'}
             </Text>
           </View>

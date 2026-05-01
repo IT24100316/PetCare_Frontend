@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://petcarebackend-production.up.railway.app/api',
+  baseURL: 'https://pawcare-testinghost.onrender.com/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
