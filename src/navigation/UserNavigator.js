@@ -15,6 +15,7 @@ import EditProfileScreen from '../screens/user/EditProfileScreen';
 import EditPetScreen from '../screens/pet/EditPetScreen';
 import PetProfileScreen from '../screens/pet/PetProfileScreen';
 import AISymptomCheckerScreen from '../screens/ai/AISymptomCheckerScreen';
+import ChatScreen from '../screens/ChatScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -95,6 +96,10 @@ const UserNavigator = () => {
         name="AISymptomChecker" 
         component={AISymptomCheckerScreen} 
         options={{ title: 'AI Health Check' }} 
+      />
+      <Stack.Screen 
+        name="Chat" 
+        component={ChatScreen} 
       />
     </Stack.Navigator>
   );

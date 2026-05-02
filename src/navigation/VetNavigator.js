@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import VetDashboardScreen from '../screens/vet/VetDashboardScreen';
 import MedicalRecordsScreen from '../screens/vet/MedicalRecordsScreen';
 import AddEditRecordScreen from '../screens/vet/AddEditRecordScreen';
+import ChatScreen from '../screens/ChatScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,10 @@ const VetNavigator = () => {
         options={({ route }) => ({ 
           title: route.params?.record ? 'Edit Record' : 'Add Record' 
         })} 
+      />
+      <Stack.Screen 
+        name="Chat" 
+        component={ChatScreen} 
       />
     </Stack.Navigator>
   );

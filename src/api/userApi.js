@@ -34,3 +34,8 @@ export const uploadImage = async (formData) => {
 
   return response.json();
 };
+
+export const getVetUser = async () => {
+  const response = await axiosInstance.get('/users/vet');
+  return response.data;
+};

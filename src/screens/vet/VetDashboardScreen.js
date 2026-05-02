@@ -182,6 +182,35 @@ const VetDashboardScreen = () => {
             </TouchableOpacity>
           </View>
         )}
+
+        {item.status === 'Approved' && (
+          <View style={styles.cardActions}>
+            <TouchableOpacity 
+              style={styles.chatBtn} 
+              onPress={() => navigation.navigate('Chat', {
+                bookingId: item._id,
+                receiverId: item.userId?._id,
+                receiverName: item.userId?.name
+              })}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color={C.primary} />
+              <Text style={styles.chatBtnText}>Chat with Owner</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.cancelBtnSmall} 
+              onPress={() => Alert.alert(
+                'Cancel Appointment',
+                'Are you sure? This will free up the time slot.',
+                [
+                  { text: 'No' },
+                  { text: 'Yes, Cancel', onPress: () => handleStatusUpdate(item._id, 'Cancelled'), style: 'destructive' }
+                ]
+              )}
+            >
+              <Ionicons name="trash-outline" size={18} color={C.error} />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
@@ -355,6 +384,9 @@ const styles = StyleSheet.create({
   rejectBtnText: { fontSize: 14, fontWeight: '700', color: C.error },
   approveBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 12, backgroundColor: C.primary, shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   approveBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  chatBtn: { flex: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12, backgroundColor: C.onPrimaryContainer, borderWidth: 1, borderColor: C.primary + '20' },
+  chatBtnText: { fontSize: 14, fontWeight: '700', color: C.primary },
+  cancelBtnSmall: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.errorContainer, borderRadius: 12, borderWidth: 1, borderColor: '#f5c6c3' },
   summaryContainer: { backgroundColor: C.surface, paddingHorizontal: 18, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.surfaceHigh },
   summaryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   summaryTitle: { fontSize: 16, fontWeight: '800', color: C.onSurface },

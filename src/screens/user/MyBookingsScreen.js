@@ -8,6 +8,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { getMyBookings } from '../../api/bookingApi';
 import axiosInstance from '../../api/axiosInstance';
+import { getVetUser } from '../../api/userApi';
 
 const C = {
   primary: '#006850', primaryContainer: '#148367', onPrimaryContainer: '#effff6',
@@ -43,6 +44,16 @@ const MyBookingsScreen = () => {
   const [expandedSections, setExpandedSections] = useState({ Vet: true, Grooming: true, Boarding: true });
   const isFocused = useIsFocused();
   const navigation = useNavigation();
+  const [vetInfo, setVetInfo] = useState(null);
+
+  const fetchVetInfo = async () => {
+    try {
+      const data = await getVetUser();
+      setVetInfo(data);
+    } catch (e) {
+      console.log('No vet found for chat');
+    }
+  };
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -54,7 +65,12 @@ const MyBookingsScreen = () => {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { if (isFocused) fetchBookings(); }, [isFocused]);
+  useEffect(() => { 
+    if (isFocused) {
+      fetchBookings(); 
+      fetchVetInfo();
+    }
+  }, [isFocused]);
 
   const handleCancel = (booking) => {
     if (booking.isInstantSlot === true) {
@@ -140,12 +156,25 @@ const MyBookingsScreen = () => {
         )}
 
         {/* Edit & Cancel Actions */}
-        {(canCancel || (item.serviceType === 'Grooming' && item.status === 'Pending')) && (
+        {(canCancel || (item.serviceType === 'Grooming' && item.status === 'Pending') || (item.serviceType === 'Vet' && item.status === 'Approved')) && (
           <View style={styles.cardActionsRow}>
             {item.serviceType === 'Grooming' && item.status === 'Pending' && (
               <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('GroomingBooking', { booking: item })}>
                 <Ionicons name="create-outline" size={15} color={C.primary} />
                 <Text style={styles.editBtnText}>Edit Booking</Text>
+              </TouchableOpacity>
+            )}
+            {item.serviceType === 'Vet' && item.status === 'Approved' && vetInfo && (
+              <TouchableOpacity 
+                style={styles.chatBtn} 
+                onPress={() => navigation.navigate('Chat', {
+                  bookingId: item._id,
+                  receiverId: vetInfo._id,
+                  receiverName: vetInfo.name
+                })}
+              >
+                <Ionicons name="chatbubble-ellipses-outline" size={15} color={C.primary} />
+                <Text style={styles.chatBtnText}>Chat with Vet</Text>
               </TouchableOpacity>
             )}
             {canCancel && (
@@ -375,6 +404,12 @@ const styles = StyleSheet.create({
     backgroundColor: C.errorContainer, paddingVertical: 11,
   },
   cancelBtnText: { color: C.onErrorContainer, fontWeight: '700', fontSize: 13 },
+  chatBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 11, borderRightWidth: 1, borderRightColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: C.onPrimaryContainer,
+  },
+  chatBtnText: { color: C.primary, fontWeight: '700', fontSize: 13 },
 
   empty: { flex: 1, alignItems: 'center', paddingTop: 60, paddingHorizontal: 32 },
   emptyIcon: { width: 100, height: 100, borderRadius: 50, backgroundColor: C.surfaceHigh, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
