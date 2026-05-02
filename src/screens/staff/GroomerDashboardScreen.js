@@ -63,6 +63,10 @@ const GroomerDashboardScreen = () => {
     const sc = STATUS_CONFIG[item.status] || STATUS_CONFIG.Pending;
     const dateStr = item.appointmentDate ? new Date(item.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'N/A';
     const petInitial = item.petId?.name?.charAt(0).toUpperCase() || '?';
+    
+    const moodEmoji = item.petMood === 'Calm' ? '😌' : item.petMood === 'Nervous' ? '😰' : item.petMood === 'Aggressive' ? '😠' : '';
+    const moodColor = item.petMood === 'Calm' ? '#10b981' : item.petMood === 'Nervous' ? '#f59e0b' : item.petMood === 'Aggressive' ? '#ef4444' : C.outline;
+
     return (
       <View style={styles.card}>
         {/* Card Header */}
@@ -80,8 +84,18 @@ const GroomerDashboardScreen = () => {
           </View>
         </View>
 
-        {/* Card Details */}
+        {/* Mood & Service Summary */}
+        <View style={styles.summaryRow}>
+          <View style={[styles.moodBadge, { borderColor: moodColor }]}>
+            <Text style={styles.moodBadgeText}>{moodEmoji} {item.petMood || 'Unknown'}</Text>
+          </View>
+          <Text style={styles.serviceText}>{item.subService || 'Grooming'}</Text>
+          <Text style={styles.priceText}>${item.price || '0'}</Text>
+        </View>
+
         <View style={styles.cardDivider} />
+
+        {/* Card Details */}
         <View style={styles.cardDetails}>
           <View style={styles.detailRow}>
             <Ionicons name="calendar-outline" size={14} color={C.outline} />
@@ -95,7 +109,32 @@ const GroomerDashboardScreen = () => {
             <Ionicons name="person-outline" size={14} color={C.outline} />
             <Text style={styles.detailText}>{item.userId?.name || 'Unknown'}</Text>
           </View>
+          {item.lastGroomingDate && (
+            <View style={styles.detailRow}>
+              <Ionicons name="cut-outline" size={14} color={C.outline} />
+              <Text style={styles.detailText}>Last: {new Date(item.lastGroomingDate).toLocaleDateString()}</Text>
+            </View>
+          )}
         </View>
+
+        {/* Add-ons */}
+        {item.addOns && item.addOns.length > 0 && (
+          <View style={styles.addOnContainer}>
+            {item.addOns.map((add, i) => (
+              <View key={i} style={styles.addOnBadge}>
+                <Text style={styles.addOnBadgeText}>+ {add}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Notes */}
+        {item.notes && (
+          <View style={styles.notesContainer}>
+            <Ionicons name="chatbox-ellipses-outline" size={16} color={C.secondary} />
+            <Text style={styles.notesText}>{item.notes}</Text>
+          </View>
+        )}
 
         {/* Actions */}
         {item.status === 'Pending' && (
@@ -221,6 +260,16 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.surface, paddingBottom: 60 },
   emptyTitle: { fontSize: 18, fontWeight: '800', color: C.onSurface, marginTop: 16 },
   emptySubtitle: { fontSize: 14, color: C.outline, marginTop: 6 },
+  summaryRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 12, gap: 10 },
+  moodBadge: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  moodBadgeText: { fontSize: 12, fontWeight: '700' },
+  serviceText: { flex: 1, fontSize: 14, fontWeight: '800', color: C.onSurface },
+  priceText: { fontSize: 16, fontWeight: '800', color: C.primary },
+  addOnContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, paddingBottom: 8, gap: 6 },
+  addOnBadge: { backgroundColor: C.surfaceHigh, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  addOnBadgeText: { fontSize: 11, fontWeight: '600', color: C.outline },
+  notesContainer: { flexDirection: 'row', backgroundColor: C.surfaceLow, marginHorizontal: 16, marginBottom: 16, padding: 10, borderRadius: 10, gap: 8 },
+  notesText: { flex: 1, fontSize: 12, color: C.onSurfaceVariant, fontStyle: 'italic' },
 });
 
 export default GroomerDashboardScreen;

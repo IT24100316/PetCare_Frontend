@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, FlatList, StyleSheet,
-  Alert, ActivityIndicator, ScrollView, StatusBar,
+  Alert, ActivityIndicator, ScrollView, StatusBar, TextInput,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { getPets } from '../../api/petApi';
-import { getAvailableSlots, lockSlot, confirmBooking } from '../../api/groomingApi';
+import { getAvailableSlots, lockSlot, confirmBooking, updateBooking } from '../../api/groomingApi';
 
 const C = {
   primary: '#006850', primaryContainer: '#148367', onPrimaryContainer: '#effff6',
@@ -21,6 +21,24 @@ const C = {
 const PET_COLORS = ['#148367', '#8e4e14', '#9f3a21', '#006850', '#783d01'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const GROOMING_SERVICES = [
+  { id: 'full', name: 'Full Groom', price: 50, desc: 'Bath, haircut, nails, and ears.' },
+  { id: 'bath', name: 'Bath & Brush', price: 30, desc: 'Deep cleaning and deshedding.' },
+  { id: 'nail', name: 'Quick Trim', price: 15, desc: 'Just a quick nail clipping.' },
+];
+
+const ADD_ONS = [
+  { id: 'nails', name: 'Nail Trimming', price: 10 },
+  { id: 'ears', name: 'Ear Cleaning', price: 8 },
+  { id: 'flea', name: 'Flea Treatment', price: 12 },
+];
+
+const MOODS = [
+  { id: 'Calm', label: 'Calm', emoji: '😌', color: '#10b981' },
+  { id: 'Nervous', label: 'Nervous', emoji: '😰', color: '#f59e0b' },
+  { id: 'Aggressive', label: 'Aggressive', emoji: '😠', color: '#ef4444' },
+];
 
 const getNext7Days = () => {
   const days = [];
@@ -45,35 +63,65 @@ const formatTime = (t) => {
 
 const GroomingBookingScreen = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const route = useRoute();
   const NEXT7 = getNext7Days();
-  const [selectedDate, setSelectedDate] = useState(NEXT7[0].fullDate);
-  const [availableSlots, setAvailableSlots] = useState([]);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+
+  // Check for Edit Mode
+  const editBooking = route.params?.booking || null;
+  const isEdit = !!editBooking;
+
+  // Step Management
+  const [step, setStep] = useState(1);
+
+  // Form State
+  const [selectedPet, setSelectedPet] = useState(editBooking?.petId?._id || editBooking?.petId || null);
+  const [petMood, setPetMood] = useState(editBooking?.petMood || 'Calm');
+  const [lastGroomed, setLastGroomed] = useState(editBooking?.lastGroomingDate ? new Date(editBooking.lastGroomingDate).toISOString().split('T')[0] : '');
+  const [selectedService, setSelectedService] = useState(GROOMING_SERVICES.find(s => s.name === editBooking?.subService) || GROOMING_SERVICES[0]);
+  const [selectedAddOns, setSelectedAddOns] = useState(
+    editBooking?.addOns ? editBooking.addOns.map(name => ADD_ONS.find(a => a.name === name)?.id).filter(Boolean) : []
+  );
+  const [selectedDate, setSelectedDate] = useState(editBooking?.appointmentDate ? new Date(editBooking.appointmentDate).toISOString().split('T')[0] : NEXT7[0].fullDate);
+  const [selectedSlot, setSelectedSlot] = useState(editBooking?.timeSlot ? { time: editBooking.timeSlot } : null);
+  const [notes, setNotes] = useState(editBooking?.notes || '');
+
+  // Data State
   const [pets, setPets] = useState([]);
-  const [selectedPet, setSelectedPet] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
   const [loadingPets, setLoadingPets] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const navigation = useNavigation();
 
   useEffect(() => { fetchPets(); }, []);
-  useEffect(() => { fetchSlots(); }, [selectedDate]);
+  useEffect(() => { if (step === 4) fetchSlots(); }, [selectedDate, step]);
 
   const fetchPets = async () => {
     try {
       const data = await getPets();
       setPets(data);
-      if (data?.length > 0) setSelectedPet(data[0]._id);
+      if (data?.length > 0 && !selectedPet) setSelectedPet(data[0]._id);
     } catch { Alert.alert('Error', 'Failed to load pets'); }
     finally { setLoadingPets(false); }
   };
 
   const fetchSlots = async () => {
     setLoadingSlots(true);
-    setSelectedSlot(null);
+    // In edit mode, if the selected date is the original date, we should keep the current slot
+    const originalDateStr = editBooking?.appointmentDate ? new Date(editBooking.appointmentDate).toISOString().split('T')[0] : null;
+    
     try {
       const data = await getAvailableSlots(selectedDate);
-      setAvailableSlots(Array.isArray(data) ? data : data.slots || []);
+      let slots = Array.isArray(data) ? data : data.slots || [];
+      
+      // If editing and on the original date, add the current slot back to the available list if it's missing
+      if (isEdit && selectedDate === originalDateStr && editBooking.timeSlot) {
+        const exists = slots.find(s => (typeof s === 'string' ? s : s.time) === editBooking.timeSlot);
+        if (!exists) {
+          slots = [{ time: editBooking.timeSlot }, ...slots];
+        }
+      }
+      setAvailableSlots(slots);
     } catch { setAvailableSlots([]); }
     finally { setLoadingSlots(false); }
   };
@@ -83,129 +131,248 @@ const GroomingBookingScreen = () => {
     setConfirming(true);
     try {
       const timeStr = typeof selectedSlot === 'string' ? selectedSlot : selectedSlot.time;
-      const lockData = await lockSlot(selectedDate, timeStr);
-      const bookingId = lockData._id || lockData.id || lockData.bookingId || lockData.booking?._id;
-      await confirmBooking(bookingId, selectedPet);
-      Alert.alert('✂️ Booked!', 'Grooming session confirmed!', [
-        { text: 'Great!', onPress: () => navigation.navigate('PetList') },
-      ]);
-    } catch {
-      Alert.alert('Unavailable', 'Slot just taken. Try another.');
-      setSelectedSlot(null);
+      const totalPrice = selectedService.price + selectedAddOns.reduce((acc, id) => acc + (ADD_ONS.find(a => a.id === id)?.price || 0), 0);
+      const extras = {
+        subService: selectedService.name,
+        price: totalPrice,
+        addOns: selectedAddOns.map(id => ADD_ONS.find(a => a.id === id)?.name),
+        petMood,
+        lastGroomingDate: lastGroomed ? new Date(lastGroomed) : null,
+        notes
+      };
+
+      if (isEdit) {
+        // Just update existing booking
+        await updateBooking(editBooking._id, {
+          ...extras,
+          petId: selectedPet,
+          appointmentDate: selectedDate,
+          timeSlot: timeStr
+        });
+        Alert.alert('✅ Updated', 'Booking updated successfully!', [
+          { text: 'Great!', onPress: () => navigation.navigate('MyBookings') },
+        ]);
+      } else {
+        // New booking flow
+        const lockData = await lockSlot(selectedDate, timeStr);
+        const bookingId = lockData._id || lockData.id || lockData.bookingId || lockData.booking?._id;
+        await confirmBooking(bookingId, selectedPet, extras);
+        Alert.alert('✂️ Booked!', 'Grooming session confirmed!', [
+          { text: 'Great!', onPress: () => navigation.navigate('PetList') },
+        ]);
+      }
+    } catch (e) {
+      console.log(e);
+      Alert.alert('Error', 'Something went wrong. The slot might have been taken.');
+      setStep(4);
       fetchSlots();
     } finally { setConfirming(false); }
   };
 
-  const selectedPetName = pets.find(p => p._id === selectedPet)?.name ?? null;
-  const canConfirm = !!selectedSlot && !!selectedPet && !confirming;
+  const toggleAddOn = (id) => {
+    setSelectedAddOns(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
+  };
 
-  const renderSlot = ({ item }) => {
-    const timeStr = typeof item === 'string' ? item : item.time;
-    const isInstant = typeof item === 'object' && item.isInstant;
-    const isSelected = selectedSlot === item || selectedSlot?.time === item?.time || (typeof selectedSlot === 'string' && selectedSlot === item);
-    return (
-      <TouchableOpacity style={[styles.slotCard, isSelected && styles.slotCardSelected]} onPress={() => setSelectedSlot(item)} activeOpacity={0.8}>
-        <Text style={[styles.slotTime, isSelected && styles.slotTimeSelected]}>{formatTime(timeStr)}</Text>
-        {isInstant && (
-          <View style={[styles.instantBadge, isSelected && { backgroundColor: C.secondaryContainer }]}>
-            <Ionicons name="flash" size={10} color={C.onSecondaryContainer} />
-            <Text style={styles.instantText}>Instant</Text>
+  const nextStep = () => setStep(s => Math.min(s + 1, 5));
+  const prevStep = () => setStep(s => Math.max(s - 1, 1));
+
+  const currentPet = pets.find(p => p._id === selectedPet);
+  const totalPrice = selectedService.price + selectedAddOns.reduce((acc, id) => acc + (ADD_ONS.find(a => a.id === id)?.price || 0), 0);
+
+  // Render Functions
+  const renderStepIndicator = () => (
+    <View style={styles.stepContainer}>
+      {[1, 2, 3, 4, 5].map(s => (
+        <View key={s} style={[styles.stepDot, step >= s && styles.stepDotActive, step === s && styles.stepDotCurrent]} />
+      ))}
+    </View>
+  );
+
+  const renderPetStep = () => (
+    <View style={styles.content}>
+      <Text style={styles.stepTitle}>Who is getting a haircut?</Text>
+      {loadingPets ? <ActivityIndicator color={C.primary} /> : (
+        <ScrollView contentContainerStyle={styles.petGrid}>
+          {pets.map((pet, idx) => {
+            const active = selectedPet === pet._id;
+            const color = PET_COLORS[idx % PET_COLORS.length];
+            return (
+              <TouchableOpacity key={pet._id} style={[styles.petCard, active && styles.petCardActive]} onPress={() => setSelectedPet(pet._id)}>
+                <View style={[styles.petAvatarLarge, { backgroundColor: color + '22' }]}>
+                  <Text style={[styles.petInitialLarge, { color }]}>{pet.name?.charAt(0).toUpperCase()}</Text>
+                </View>
+                <Text style={[styles.petNameLarge, active && { color: '#fff' }]}>{pet.name}</Text>
+                {active && <Ionicons name="checkmark-circle" size={24} color="#fff" style={styles.checkIcon} />}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+    </View>
+  );
+
+  const renderPetDetailsStep = () => (
+    <View style={styles.content}>
+      <Text style={styles.stepTitle}>How is {currentPet?.name} feeling?</Text>
+      <View style={styles.moodRow}>
+        {MOODS.map(m => (
+          <TouchableOpacity key={m.id} style={[styles.moodCard, petMood === m.id && { borderColor: m.color, backgroundColor: m.color + '10' }]} onPress={() => setPetMood(m.id)}>
+            <Text style={styles.moodEmoji}>{m.emoji}</Text>
+            <Text style={[styles.moodLabel, petMood === m.id && { color: m.color, fontWeight: '800' }]}>{m.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Text style={[styles.stepTitle, { marginTop: 32 }]}>Last Grooming Date</Text>
+      <TextInput 
+        style={styles.dateInput} 
+        placeholder="YYYY-MM-DD (Optional)" 
+        value={lastGroomed} 
+        onChangeText={setLastGroomed}
+        placeholderTextColor={C.outline}
+      />
+      <Text style={styles.inputHint}>Helps our groomers estimate the work needed.</Text>
+    </View>
+  );
+
+  const renderServiceStep = () => (
+    <View style={styles.content}>
+      <Text style={styles.stepTitle}>Select Service</Text>
+      {GROOMING_SERVICES.map(s => (
+        <TouchableOpacity key={s.id} style={[styles.serviceCard, selectedService.id === s.id && styles.serviceCardActive]} onPress={() => setSelectedService(s)}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.serviceName, selectedService.id === s.id && { color: '#fff' }]}>{s.name}</Text>
+            <Text style={[styles.serviceDesc, selectedService.id === s.id && { color: 'rgba(255,255,255,0.8)' }]}>{s.desc}</Text>
+          </View>
+          <Text style={[styles.servicePrice, selectedService.id === s.id && { color: '#fff' }]}>${s.price}</Text>
+        </TouchableOpacity>
+      ))}
+
+      <Text style={[styles.stepTitle, { marginTop: 24 }]}>Add-ons</Text>
+      <View style={styles.addOnGrid}>
+        {ADD_ONS.map(a => {
+          const active = selectedAddOns.includes(a.id);
+          return (
+            <TouchableOpacity key={a.id} style={[styles.addOnCard, active && styles.addOnCardActive]} onPress={() => toggleAddOn(a.id)}>
+              <Ionicons name={active ? "checkbox" : "square-outline"} size={20} color={active ? '#fff' : C.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.addOnName, active && { color: '#fff' }]}>{a.name}</Text>
+                <Text style={[styles.addOnPrice, active && { color: 'rgba(255,255,255,0.9)' }]}>+${a.price}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+
+  const renderSlotStep = () => (
+    <View style={styles.content}>
+      <Text style={styles.stepTitle}>When should we visit?</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 20 }}>
+        {NEXT7.map(day => {
+          const active = selectedDate === day.fullDate;
+          return (
+            <TouchableOpacity key={day.fullDate} style={[styles.dateChip, active && styles.dateChipSelected]} onPress={() => setSelectedDate(day.fullDate)}>
+              <Text style={[styles.dateChipDay, active && styles.dateChipTextSelected]}>{day.dayName}</Text>
+              <Text style={[styles.dateChipNum, active && styles.dateChipTextSelected]}>{day.dateNum}</Text>
+              <Text style={[styles.dateChipMonth, active && styles.dateChipTextSelected]}>{day.month}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      <Text style={[styles.stepTitle, { marginTop: 10 }]}>Available Slots</Text>
+      {loadingSlots ? <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 28 }} /> : availableSlots.length === 0 ? (
+        <View style={styles.emptyState}><Text style={styles.emptyText}>No slots for this date.</Text></View>
+      ) : (
+        <View style={styles.slotGrid}>
+          {availableSlots.map((item, i) => {
+            const timeStr = typeof item === 'string' ? item : item.time;
+            const isSelected = selectedSlot === item || selectedSlot?.time === item?.time;
+            return (
+              <TouchableOpacity key={i} style={[styles.slotItem, isSelected && styles.slotItemSelected]} onPress={() => setSelectedSlot(item)}>
+                <Text style={[styles.slotTime, isSelected && { color: '#fff' }]}>{formatTime(timeStr)}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+
+  const renderReviewStep = () => (
+    <View style={styles.content}>
+      <Text style={styles.stepTitle}>Final Review</Text>
+      <View style={styles.reviewCard}>
+        <View style={styles.reviewRow}>
+          <Text style={styles.reviewLabel}>Pet</Text>
+          <Text style={styles.reviewValue}>{currentPet?.name} ({petMood})</Text>
+        </View>
+        <View style={styles.reviewRow}>
+          <Text style={styles.reviewLabel}>Service</Text>
+          <Text style={styles.reviewValue}>{selectedService.name}</Text>
+        </View>
+        {selectedAddOns.length > 0 && (
+          <View style={styles.reviewRow}>
+            <Text style={styles.reviewLabel}>Add-ons</Text>
+            <Text style={styles.reviewValue}>{selectedAddOns.map(id => ADD_ONS.find(a => a.id === id)?.name).join(', ')}</Text>
           </View>
         )}
-      </TouchableOpacity>
-    );
-  };
+        <View style={styles.reviewRow}>
+          <Text style={styles.reviewLabel}>Appointment</Text>
+          <Text style={styles.reviewValue}>{selectedDate} at {formatTime(typeof selectedSlot === 'string' ? selectedSlot : selectedSlot?.time)}</Text>
+        </View>
+        <View style={styles.divider} />
+        <View style={styles.reviewRow}>
+          <Text style={styles.totalLabel}>Total Price</Text>
+          <Text style={styles.totalValue}>${totalPrice}</Text>
+        </View>
+      </View>
+
+      <Text style={[styles.stepTitle, { marginTop: 24 }]}>Notes for Groomer</Text>
+      <TextInput
+        style={styles.notesInput}
+        multiline
+        placeholder="Any allergies, behaviors, or specific requests?"
+        value={notes}
+        onChangeText={setNotes}
+        placeholderTextColor={C.outline}
+      />
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor={C.emeraldDark} />
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="rgba(236,253,245,0.85)" />
+        <TouchableOpacity style={styles.headerBtn} onPress={step === 1 ? () => navigation.goBack() : prevStep}>
+          <Ionicons name={step === 1 ? "close" : "arrow-back"} size={24} color="rgba(236,253,245,0.85)" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Grooming</Text>
+        <Text style={styles.headerTitle}>Book Grooming</Text>
         <View style={styles.headerAvatar}><MaterialIcons name="content-cut" size={18} color={C.primaryFixedDim} /></View>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 90, 110) }]} showsVerticalScrollIndicator={false}>
-        {/* Hero */}
-        <View style={styles.hero}>
-          <View style={styles.heroCircle1} /><View style={styles.heroCircle2} />
-          <View style={styles.heroIcon}><MaterialIcons name="content-cut" size={72} color="rgba(120,216,184,0.15)" /></View>
-          <View style={styles.heroContent}>
-            <View style={styles.heroBadge}>
-              <MaterialIcons name="content-cut" size={13} color={C.primaryFixedDim} />
-              <Text style={styles.heroBadgeText}>Professional Grooming</Text>
-            </View>
-            <Text style={styles.heroTagline}>Looking good,{'\n'}feeling great!</Text>
-          </View>
-        </View>
+      {renderStepIndicator()}
 
-        {/* Date */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}><Ionicons name="calendar-outline" size={17} color={C.primary} /><Text style={styles.sectionLabel}>SELECT DATE</Text></View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-            {NEXT7.map(day => {
-              const active = selectedDate === day.fullDate;
-              return (
-                <TouchableOpacity key={day.fullDate} style={[styles.dateChip, active && styles.dateChipSelected]} onPress={() => setSelectedDate(day.fullDate)}>
-                  <Text style={[styles.dateChipDay, active && styles.dateChipTextSelected]}>{day.dayName}</Text>
-                  <Text style={[styles.dateChipNum, active && styles.dateChipTextSelected]}>{day.dateNum}</Text>
-                  <Text style={[styles.dateChipMonth, active && styles.dateChipTextSelected]}>{day.month}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Pet */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}><Ionicons name="paw-outline" size={17} color={C.primary} /><Text style={styles.sectionLabel}>SELECT PET</Text></View>
-          {loadingPets ? <ActivityIndicator color={C.primary} /> : pets.length === 0 ? (
-            <View style={styles.emptyState}><Text style={styles.emptyText}>No pets found.</Text></View>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-              {pets.map((pet, idx) => {
-                const active = selectedPet === pet._id;
-                const color = PET_COLORS[idx % PET_COLORS.length];
-                return (
-                  <TouchableOpacity key={pet._id} style={[styles.petPill, active && styles.petPillActive]} onPress={() => setSelectedPet(pet._id)}>
-                    <View style={[styles.petAvatar, { backgroundColor: active ? 'rgba(255,255,255,0.22)' : color + '22' }]}>
-                      <Text style={[styles.petInitial, { color: active ? '#fff' : color }]}>{pet.name?.charAt(0).toUpperCase()}</Text>
-                    </View>
-                    <Text style={[styles.petName, active && { color: '#fff' }]}>{pet.name}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          )}
-        </View>
-
-        {/* Slots */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}><Ionicons name="time-outline" size={17} color={C.primary} /><Text style={styles.sectionLabel}>AVAILABLE SLOTS</Text></View>
-          {loadingSlots ? <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 28 }} /> : availableSlots.length === 0 ? (
-            <View style={styles.emptyState}><Text style={styles.emptyText}>No slots for this date.</Text></View>
-          ) : (
-            <FlatList data={availableSlots} keyExtractor={(_, i) => i.toString()} numColumns={3} renderItem={renderSlot} scrollEnabled={false} columnWrapperStyle={{ gap: 10, marginBottom: 10 }} />
-          )}
-        </View>
-
-        {selectedSlot && selectedPetName && (
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryIcon}><MaterialIcons name="content-cut" size={22} color={C.secondary} /></View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.summaryTitle}>Session Summary</Text>
-              <Text style={styles.summaryBody}>Grooming session for {selectedPetName} at {formatTime(typeof selectedSlot === 'string' ? selectedSlot : selectedSlot.time)}.</Text>
-            </View>
-          </View>
-        )}
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]} showsVerticalScrollIndicator={false}>
+        {step === 1 && renderPetStep()}
+        {step === 2 && renderPetDetailsStep()}
+        {step === 3 && renderServiceStep()}
+        {step === 4 && renderSlotStep()}
+        {step === 5 && renderReviewStep()}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-        <TouchableOpacity style={[styles.confirmBtn, !canConfirm && styles.confirmBtnOff]} onPress={handleConfirm} disabled={!canConfirm}>
-          {confirming ? <ActivityIndicator color="#fff" size="small" /> : (
-            <><Text style={styles.confirmBtnText}>{selectedSlot ? 'Confirm Booking' : 'Select a Slot'}</Text>{selectedSlot && <Ionicons name="arrow-forward" size={22} color="#fff" />}</>
+        <TouchableOpacity 
+          style={[styles.nextBtn, (step === 1 && !selectedPet) || (step === 4 && !selectedSlot) ? styles.nextBtnDisabled : null]} 
+          onPress={step === 5 ? handleConfirm : nextStep}
+          disabled={confirming || (step === 1 && !selectedPet) || (step === 4 && !selectedSlot)}
+        >
+          {confirming ? <ActivityIndicator color="#fff" /> : (
+            <>
+              <Text style={styles.nextBtnText}>{step === 5 ? 'Confirm Booking' : 'Continue'}</Text>
+              <Ionicons name={step === 5 ? "checkmark-circle" : "arrow-forward"} size={20} color="#fff" />
+            </>
           )}
         </TouchableOpacity>
       </View>
@@ -217,48 +384,63 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.emeraldDark },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
   headerBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
   headerAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(120,216,184,0.18)', justifyContent: 'center', alignItems: 'center' },
-  scroll: { flex: 1, backgroundColor: C.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 8 },
-  hero: { height: 180, backgroundColor: C.secondary, borderRadius: 20, marginTop: 16, overflow: 'hidden', position: 'relative' },
-  heroCircle1: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(255,255,255,0.08)', top: -70, right: -55 },
-  heroCircle2: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.05)', bottom: -40, left: -28 },
-  heroIcon: { position: 'absolute', right: 18, bottom: 8 },
-  heroContent: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20 },
-  heroBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, marginBottom: 10, gap: 5 },
-  heroBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  heroTagline: { fontSize: 18, fontWeight: '700', color: '#fff', lineHeight: 26 },
-  section: { marginTop: 28 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  sectionLabel: { fontSize: 11, fontWeight: '800', color: C.primary, letterSpacing: 1.6, textTransform: 'uppercase' },
-  dateChip: { alignItems: 'center', backgroundColor: C.surfaceLowest, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, borderWidth: 2, borderColor: 'transparent', minWidth: 60 },
+  stepContainer: { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingVertical: 10, backgroundColor: C.emeraldDark },
+  stepDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.2)' },
+  stepDotActive: { backgroundColor: C.primaryFixedDim },
+  stepDotCurrent: { width: 24, backgroundColor: C.primaryFixedDim },
+  scroll: { flex: 1, backgroundColor: C.surface, borderTopLeftRadius: 30, borderTopRightRadius: 30 },
+  scrollContent: { padding: 24 },
+  content: { flex: 1 },
+  stepTitle: { fontSize: 22, fontWeight: '800', color: C.onSurface, marginBottom: 20 },
+  petGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  petCard: { width: '47%', backgroundColor: C.surfaceLowest, borderRadius: 20, padding: 20, alignItems: 'center', borderWidth: 2, borderColor: 'transparent' },
+  petCardActive: { borderColor: C.primary, backgroundColor: C.primary },
+  petAvatarLarge: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  petInitialLarge: { fontSize: 32, fontWeight: '800' },
+  petNameLarge: { fontSize: 18, fontWeight: '700', color: C.onSurface },
+  checkIcon: { position: 'absolute', top: 10, right: 10 },
+  moodRow: { flexDirection: 'row', gap: 12 },
+  moodCard: { flex: 1, backgroundColor: C.surfaceLowest, borderRadius: 16, padding: 16, alignItems: 'center', borderWidth: 2, borderColor: 'transparent' },
+  moodEmoji: { fontSize: 32, marginBottom: 8 },
+  moodLabel: { fontSize: 14, fontWeight: '600', color: C.outline },
+  dateInput: { backgroundColor: C.surfaceLowest, borderRadius: 16, padding: 18, fontSize: 16, color: C.onSurface, borderWidth: 1, borderColor: C.outlineVariant },
+  inputHint: { fontSize: 12, color: C.outline, marginTop: 8, marginLeft: 4 },
+  serviceCard: { backgroundColor: C.surfaceLowest, borderRadius: 20, padding: 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 2, borderColor: 'transparent' },
+  serviceCardActive: { backgroundColor: C.primary, borderColor: C.primaryContainer },
+  serviceName: { fontSize: 18, fontWeight: '800', color: C.onSurface },
+  serviceDesc: { fontSize: 13, color: C.outline, marginTop: 4 },
+  servicePrice: { fontSize: 20, fontWeight: '800', color: C.primary },
+  addOnGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  addOnCard: { width: '100%', backgroundColor: C.surfaceLowest, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: C.outlineVariant },
+  addOnCardActive: { backgroundColor: C.primaryContainer, borderColor: C.primary },
+  addOnName: { fontSize: 15, fontWeight: '700', color: C.onSurface },
+  addOnPrice: { fontSize: 13, color: C.primary, fontWeight: '600' },
+  dateChip: { alignItems: 'center', backgroundColor: C.surfaceLowest, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, borderWidth: 2, borderColor: 'transparent', minWidth: 70 },
   dateChipSelected: { backgroundColor: C.primary },
   dateChipDay: { fontSize: 11, fontWeight: '700', color: C.outline, textTransform: 'uppercase' },
   dateChipNum: { fontSize: 22, fontWeight: '800', color: C.onSurface, marginVertical: 2 },
   dateChipMonth: { fontSize: 11, fontWeight: '600', color: C.outline },
   dateChipTextSelected: { color: '#fff' },
-  petPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLowest, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 99 },
-  petPillActive: { backgroundColor: C.primary },
-  petAvatar: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
-  petInitial: { fontSize: 14, fontWeight: '800' },
-  petName: { fontSize: 14, fontWeight: '600', color: C.onSurfaceVariant },
-  emptyState: { alignItems: 'center', paddingVertical: 24 },
-  emptyText: { color: C.outline, fontSize: 14, textAlign: 'center' },
-  slotCard: { flex: 1, backgroundColor: C.surfaceLowest, borderRadius: 14, paddingVertical: 14, alignItems: 'center', gap: 6, borderWidth: 2, borderColor: 'transparent' },
-  slotCardSelected: { backgroundColor: C.primaryContainer, borderColor: C.primary, transform: [{ scale: 1.05 }] },
-  slotTime: { fontSize: 13, fontWeight: '700', color: C.onSurface },
-  slotTimeSelected: { color: C.onPrimaryContainer },
-  instantBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: C.secondaryContainer + '44', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 99 },
-  instantText: { fontSize: 9, fontWeight: '800', color: C.onSecondaryContainer, textTransform: 'uppercase' },
-  summaryCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, backgroundColor: C.surfaceLow, borderRadius: 16, padding: 18, marginTop: 28, borderLeftWidth: 4, borderLeftColor: C.secondary },
-  summaryIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.secondary + '18', justifyContent: 'center', alignItems: 'center' },
-  summaryTitle: { fontSize: 16, fontWeight: '800', color: C.onSurface, marginBottom: 6 },
-  summaryBody: { fontSize: 14, color: C.onSurfaceVariant, lineHeight: 21 },
-  footer: { backgroundColor: 'rgba(250,249,248,0.97)', paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.outlineVariant + '50' },
-  confirmBtn: { backgroundColor: C.primary, height: 60, borderRadius: 99, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: C.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.32, shadowRadius: 14, elevation: 8 },
-  confirmBtnOff: { backgroundColor: C.outlineVariant, shadowOpacity: 0, elevation: 0 },
-  confirmBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  slotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  slotItem: { width: '30%', backgroundColor: C.surfaceLowest, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: C.outlineVariant },
+  slotItemSelected: { backgroundColor: C.primary, borderColor: C.primary },
+  slotTime: { fontSize: 14, fontWeight: '700', color: C.onSurface },
+  reviewCard: { backgroundColor: C.surfaceLowest, borderRadius: 20, padding: 20, gap: 16 },
+  reviewRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  reviewLabel: { fontSize: 14, color: C.outline, fontWeight: '600' },
+  reviewValue: { fontSize: 15, color: C.onSurface, fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 20 },
+  divider: { height: 1, backgroundColor: C.outlineVariant },
+  totalLabel: { fontSize: 18, fontWeight: '800', color: C.onSurface },
+  totalValue: { fontSize: 24, fontWeight: '900', color: C.primary },
+  notesInput: { backgroundColor: C.surfaceLowest, borderRadius: 20, padding: 18, fontSize: 16, color: C.onSurface, height: 120, textAlignVertical: 'top', borderWidth: 1, borderColor: C.outlineVariant },
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(250,249,248,0.95)', paddingHorizontal: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: C.outlineVariant },
+  nextBtn: { backgroundColor: C.primary, height: 60, borderRadius: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
+  nextBtnDisabled: { backgroundColor: C.outlineVariant, shadowOpacity: 0 },
+  nextBtnText: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  emptyState: { padding: 40, alignItems: 'center' },
+  emptyText: { color: C.outline, fontSize: 16 },
 });
 
 export default GroomingBookingScreen;

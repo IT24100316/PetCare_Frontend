@@ -139,12 +139,22 @@ const MyBookingsScreen = () => {
           </View>
         )}
 
-        {/* Cancel */}
-        {canCancel && (
-          <TouchableOpacity style={styles.cancelBtn} onPress={() => handleCancel(item)}>
-            <Ionicons name="close-circle-outline" size={15} color={C.error} />
-            <Text style={styles.cancelBtnText}>Cancel Booking</Text>
-          </TouchableOpacity>
+        {/* Edit & Cancel Actions */}
+        {(canCancel || (item.serviceType === 'Grooming' && item.status === 'Pending')) && (
+          <View style={styles.cardActionsRow}>
+            {item.serviceType === 'Grooming' && item.status === 'Pending' && (
+              <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('GroomingBooking', { booking: item })}>
+                <Ionicons name="create-outline" size={15} color={C.primary} />
+                <Text style={styles.editBtnText}>Edit Booking</Text>
+              </TouchableOpacity>
+            )}
+            {canCancel && (
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => handleCancel(item)}>
+                <Ionicons name="close-circle-outline" size={15} color={C.error} />
+                <Text style={styles.cancelBtnText}>Cancel Booking</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
     );
@@ -352,10 +362,17 @@ const styles = StyleSheet.create({
   },
   instantBarText: { fontSize: 12, color: C.secondary, fontWeight: '600' },
 
+  cardActionsRow: {
+    flexDirection: 'row', borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  editBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 11, borderRightWidth: 1, borderRightColor: 'rgba(0,0,0,0.05)',
+  },
+  editBtnText: { color: C.primary, fontWeight: '700', fontSize: 13 },
   cancelBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     backgroundColor: C.errorContainer, paddingVertical: 11,
-    borderTopWidth: 1, borderTopColor: 'rgba(186,26,26,0.12)',
   },
   cancelBtnText: { color: C.onErrorContainer, fontWeight: '700', fontSize: 13 },
 
