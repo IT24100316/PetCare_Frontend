@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ActivityIndicator, SafeAreaView
+  KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/AuthContext';
-import { sendMessage, getMessages } from '../api/chatApi';
+import { sendMessage, getMessages, markAsRead } from '../api/chatApi';
+import { getBookingById } from '../api/bookingApi';
 
 const ChatScreen = () => {
   const route = useRoute();
@@ -16,6 +18,7 @@ const ChatScreen = () => {
 
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bookingStatus, setBookingStatus] = useState('Approved');
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const flatListRef = useRef();
@@ -24,8 +27,10 @@ const ChatScreen = () => {
     try {
       const data = await getMessages(bookingId);
       setMessages(data);
+      const booking = await getBookingById(bookingId);
+      setBookingStatus(booking.status);
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -33,7 +38,11 @@ const ChatScreen = () => {
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 3000); // Poll every 3s
+    markAsRead(bookingId);
+    const interval = setInterval(() => {
+        fetchMessages();
+        markAsRead(bookingId);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -91,27 +100,36 @@ const ChatScreen = () => {
         />
       )}
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <View style={styles.inputArea}>
-          <TextInput
-            style={styles.input}
-            placeholder="Type a message..."
-            value={text}
-            onChangeText={setText}
-            multiline
-          />
-          <TouchableOpacity 
-            style={[styles.sendBtn, !text.trim() && styles.sendBtnDisabled]} 
-            onPress={handleSend}
-            disabled={!text.trim() || sending}
-          >
-            <Ionicons name="send" size={20} color="#fff" />
-          </TouchableOpacity>
+      {bookingStatus === 'Approved' ? (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <View style={styles.inputArea}>
+            <TextInput
+              style={styles.input}
+              placeholder="Type a message..."
+              value={text}
+              onChangeText={setText}
+              multiline
+            />
+            <TouchableOpacity 
+              style={[styles.sendBtn, !text.trim() && styles.sendBtnDisabled]} 
+              onPress={handleSend}
+              disabled={!text.trim() || sending}
+            >
+              <Ionicons name="send" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      ) : (
+        <View style={styles.disabledArea}>
+          <Ionicons name="lock-closed" size={16} color="#ba1a1a" />
+          <Text style={styles.disabledText}>
+            This conversation has ended (Booking {bookingStatus}).
+          </Text>
         </View>
-      </KeyboardAvoidingView>
+      )}
     </SafeAreaView>
   );
 };
@@ -165,7 +183,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     alignItems: 'center' 
   },
-  sendBtnDisabled: { backgroundColor: '#ccc' }
+  sendBtnDisabled: { backgroundColor: '#ccc' },
+  disabledArea: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: 20, 
+    backgroundColor: '#fff1f0', 
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#ffccc7'
+  },
+  disabledText: { color: '#ba1a1a', fontSize: 13, fontWeight: '600' }
 });
 
 export default ChatScreen;

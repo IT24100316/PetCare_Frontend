@@ -5,6 +5,11 @@ export const getMyBookings = async () => {
   return response.data;
 };
 
+export const getBookingById = async (id) => {
+  const response = await axiosInstance.get(`/bookings/${id}`);
+  return response.data;
+};
+
 /** Cancel a booking (enforces 2-hour rule & instant slot rule on backend) */
 export const cancelBooking = async (serviceType, bookingId) => {
   const slugMap = { Vet: 'vet', Grooming: 'grooming', Boarding: 'boarding' };

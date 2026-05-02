@@ -9,3 +9,13 @@ export const getMessages = async (bookingId) => {
   const response = await axiosInstance.get(`/chats/${bookingId}`);
   return response.data;
 };
+
+export const getInbox = async () => {
+  const response = await axiosInstance.get('/chats/inbox');
+  return response.data;
+};
+
+export const markAsRead = async (bookingId) => {
+  const response = await axiosInstance.put(`/chats/${bookingId}/read`);
+  return response.data;
+};

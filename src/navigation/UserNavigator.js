@@ -16,6 +16,7 @@ import EditPetScreen from '../screens/pet/EditPetScreen';
 import PetProfileScreen from '../screens/pet/PetProfileScreen';
 import AISymptomCheckerScreen from '../screens/ai/AISymptomCheckerScreen';
 import ChatScreen from '../screens/ChatScreen';
+import MessageInboxScreen from '../screens/MessageInboxScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -100,6 +101,10 @@ const UserNavigator = () => {
       <Stack.Screen 
         name="Chat" 
         component={ChatScreen} 
+      />
+      <Stack.Screen 
+        name="MessageInbox" 
+        component={MessageInboxScreen} 
       />
     </Stack.Navigator>
   );

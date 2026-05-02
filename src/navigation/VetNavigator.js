@@ -4,6 +4,7 @@ import VetDashboardScreen from '../screens/vet/VetDashboardScreen';
 import MedicalRecordsScreen from '../screens/vet/MedicalRecordsScreen';
 import AddEditRecordScreen from '../screens/vet/AddEditRecordScreen';
 import ChatScreen from '../screens/ChatScreen';
+import MessageInboxScreen from '../screens/MessageInboxScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,10 @@ const VetNavigator = () => {
       <Stack.Screen 
         name="Chat" 
         component={ChatScreen} 
+      />
+      <Stack.Screen 
+        name="MessageInbox" 
+        component={MessageInboxScreen} 
       />
     </Stack.Navigator>
   );

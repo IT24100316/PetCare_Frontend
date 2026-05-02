@@ -229,6 +229,16 @@ const EditProfileScreen = () => {
 
         {section === 'activity' && (
           <View style={styles.formCard}>
+            <TouchableOpacity style={styles.activityRow} onPress={() => navigation.navigate('MessageInbox')}>
+              <View style={[styles.activityIcon, { backgroundColor: 'rgba(0,104,80,0.1)' }]}>
+                <MaterialIcons name="chat" size={20} color={C.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.activityTitle}>Messages</Text>
+                <Text style={styles.activityDesc}>View your conversations with vets</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color={C.outline} />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.activityRow} onPress={() => navigation.navigate('MyBookings')}>
               <View style={[styles.activityIcon, { backgroundColor: 'rgba(0,104,80,0.1)' }]}>
                 <MaterialIcons name="calendar-today" size={20} color={C.primary} />

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { getVetBookings, updateBookingStatus } from '../../api/vetBookingApi';
+import { getInbox } from '../../api/chatApi';
 import { AuthContext } from '../../context/AuthContext';
 
 const C = {
@@ -30,6 +31,7 @@ const VetDashboardScreen = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Pending');
+  const [unreadCount, setUnreadCount] = useState(0);
   const { logoutUser } = useContext(AuthContext);
   const navigation = useNavigation();
 
@@ -39,6 +41,11 @@ const VetDashboardScreen = () => {
       const data = await getVetBookings();
       const list = Array.isArray(data) ? data : data.bookings || [];
       setBookings(list.filter(b => b.petId != null));
+
+      // Fetch inbox to get unread count
+      const inboxData = await getInbox();
+      const totalUnread = inboxData.reduce((acc, curr) => acc + curr.unreadCount, 0);
+      setUnreadCount(totalUnread);
     } catch {
       Alert.alert('Error', 'Failed to fetch bookings');
     } finally {
@@ -271,9 +278,19 @@ const VetDashboardScreen = () => {
           </View>
           <Text style={styles.headerTitle}>My Bookings</Text>
         </View>
-        <TouchableOpacity style={styles.logoutBtn} onPress={logoutUser}>
-          <Ionicons name="log-out-outline" size={20} color="rgba(236,253,245,0.75)" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.navigate('MessageInbox')}>
+            <Ionicons name="chatbubbles-outline" size={24} color="#fff" />
+            {unreadCount > 0 && (
+              <View style={styles.headerNotificationBadge}>
+                <Text style={styles.headerNotificationText}>{unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutBtn} onPress={logoutUser}>
+            <Ionicons name="log-out-outline" size={20} color="rgba(236,253,245,0.75)" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Stats Row */}
@@ -343,6 +360,9 @@ const styles = StyleSheet.create({
   headerBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   headerBadgeText: { color: C.primaryFixedDim, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
   headerTitle: { fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  headerIconBtn: { position: 'relative', padding: 4 },
+  headerNotificationBadge: { position: 'absolute', top: -4, right: -4, backgroundColor: C.error, borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: C.emeraldDark },
+  headerNotificationText: { color: '#fff', fontSize: 9, fontWeight: '900' },
   logoutBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(120,216,184,0.12)', justifyContent: 'center', alignItems: 'center' },
   statsRow: { flexDirection: 'row', marginHorizontal: 22, marginBottom: 4, backgroundColor: 'rgba(120,216,184,0.08)', borderRadius: 16, overflow: 'hidden' },
   statCard: { flex: 1, paddingVertical: 14, alignItems: 'center' },
