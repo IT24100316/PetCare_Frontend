@@ -53,9 +53,9 @@ const PetListScreen = () => {
   useEffect(() => { if (isFocused) fetchPets(); }, [isFocused]);
 
   const renderPetCard = (item) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       key={item._id}
-      style={styles.petRowCard} 
+      style={styles.petRowCard}
       activeOpacity={0.8}
       onPress={() => navigation.navigate('PetProfile', { pet: item })}
     >
@@ -64,7 +64,7 @@ const PetListScreen = () => {
           <Image source={{ uri: item.image || item.imageUrl }} style={styles.petRowPhoto} />
         ) : (
           <View style={styles.petRowPlaceholder}>
-            <Text style={{fontSize: 22, fontWeight: '800', color: C.primary}}>{item.name.charAt(0).toUpperCase()}</Text>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: C.primary }}>{item.name.charAt(0).toUpperCase()}</Text>
           </View>
         )}
       </View>
@@ -114,12 +114,18 @@ const PetListScreen = () => {
               <MaterialIcons name="medical-services" size={32} color={C.onPrimaryContainer} />
               <Text style={styles.featuredTitle}>Book Vet Appointment</Text>
               <Text style={styles.featuredSub}>Certified medical care for your family members.</Text>
+              {/* AI Assist small button */}
+              <TouchableOpacity
+                style={styles.aiAssistBtn}
+                onPress={() => navigation.navigate('AISymptomChecker')}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons name="psychology" size={14} color="#fbbf24" />
+                <Text style={styles.aiAssistText}>AI Assist</Text>
+              </TouchableOpacity>
             </View>
             <View style={styles.featuredIconBg}>
               <Ionicons name="medical" size={120} color="rgba(255,255,255,0.1)" />
-            </View>
-            <View style={styles.featuredBtn}>
-              <Text style={styles.featuredBtnText}>Schedule Now</Text>
             </View>
           </TouchableOpacity>
 
@@ -191,6 +197,8 @@ const PetListScreen = () => {
               </View>
             </TouchableOpacity>
           </View>
+
+
         </View>
 
         <View style={styles.sectionHeader}>
@@ -293,6 +301,9 @@ const styles = StyleSheet.create({
   },
   featuredBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
+  aiAssistBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: 10, backgroundColor: 'rgba(251,191,36,0.15)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.4)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 99 },
+  aiAssistText: { fontSize: 12, fontWeight: '700', color: '#fbbf24' },
+
   gridRow: { flexDirection: 'row', gap: 16 },
   gridCard: {
     flex: 1, aspectRatio: 1, backgroundColor: C.surfaceHigh,
@@ -305,6 +316,14 @@ const styles = StyleSheet.create({
   },
   gridLabel: { fontSize: 15, fontWeight: '800', color: C.onSurface },
   gridSub: { fontSize: 11, color: C.outline, marginTop: 2, fontWeight: '500' },
+
+  aiCard: { backgroundColor: C.emeraldDark, borderRadius: 18, marginTop: 16, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 5 },
+  aiCardContent: { flexDirection: 'row', alignItems: 'center', padding: 18, gap: 14 },
+  aiCardIcon: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(120,216,184,0.2)', justifyContent: 'center', alignItems: 'center' },
+  aiCardBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
+  aiCardBadgeText: { fontSize: 9, fontWeight: '800', color: '#fbbf24', letterSpacing: 1.2 },
+  aiCardTitle: { fontSize: 16, fontWeight: '800', color: '#fff', marginBottom: 2 },
+  aiCardSub: { fontSize: 12, color: 'rgba(120,216,184,0.7)', fontWeight: '500' },
 
   petList: { gap: 14 },
   petRowCard: {
