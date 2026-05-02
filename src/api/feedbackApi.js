@@ -5,6 +5,14 @@ export const getAverageRatings = async () => {
   return response.data;
 };
 
+export const getAllFeedback = async (serviceType) => {
+  const url = serviceType
+    ? `/feedbacks?serviceType=${serviceType}`
+    : "/feedbacks";
+  const response = await axiosInstance.get(url);
+  return response.data;
+};
+
 export const submitFeedback = async (data) => {
   const response = await axiosInstance.post("/feedbacks", data);
   return response.data;
