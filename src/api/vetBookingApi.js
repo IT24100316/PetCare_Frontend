@@ -10,8 +10,8 @@ export const lockSlot = async (date, timeSlot) => {
   return response.data;
 };
 
-export const confirmBooking = async (bookingId, petId) => {
-  const response = await axiosInstance.post('/bookings/vet/confirm', { bookingId, petId });
+export const confirmBooking = async (bookingId, petId, symptoms) => {
+  const response = await axiosInstance.post('/bookings/vet/confirm', { bookingId, petId, symptoms });
   return response.data;
 };
 export const getVetBookings = async () => {

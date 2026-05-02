@@ -141,6 +141,17 @@ const VetDashboardScreen = () => {
           </View>
         </View>
 
+        {/* Symptoms / Pre-Visit Notes */}
+        {item.symptoms && (
+          <View style={styles.symptomsBox}>
+            <View style={styles.symptomsHeader}>
+              <MaterialIcons name="description" size={14} color={C.secondary} />
+              <Text style={styles.symptomsTitle}>Pre-Visit Symptoms</Text>
+            </View>
+            <Text style={styles.symptomsText}>{item.symptoms}</Text>
+          </View>
+        )}
+
         {/* Records Button */}
         {item.petId && (
           <View style={styles.recordsRow}>
@@ -353,6 +364,10 @@ const styles = StyleSheet.create({
   summarySlot: { backgroundColor: C.surfaceLowest, borderWidth: 1, borderColor: C.outlineVariant, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, minWidth: 100, alignItems: 'center' },
   summarySlotTime: { fontSize: 14, fontWeight: '800', color: C.primary },
   summarySlotName: { fontSize: 11, color: C.outline, marginTop: 2, fontWeight: '600' },
+  symptomsBox: { backgroundColor: '#fff8ed', marginHorizontal: 16, marginBottom: 12, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#ffab6944' },
+  symptomsHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  symptomsTitle: { fontSize: 12, fontWeight: '800', color: C.secondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  symptomsText: { fontSize: 13, color: '#783d01', lineHeight: 18, fontWeight: '500' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.surface, paddingBottom: 60 },
   emptyTitle: { fontSize: 18, fontWeight: '800', color: C.onSurface, marginTop: 16 },
   emptySubtitle: { fontSize: 14, color: C.outline, marginTop: 6 },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, FlatList, StyleSheet,
-  Alert, ActivityIndicator, ScrollView, StatusBar,
+  Alert, ActivityIndicator, ScrollView, StatusBar, TextInput,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -56,6 +56,7 @@ const VetBookingScreen = () => {
   const [confirming, setConfirming] = useState(false);
   const [locking, setLocking] = useState(false);
   const [lockedBookingId, setLockedBookingId] = useState(null);
+  const [symptoms, setSymptoms] = useState('');
   const navigation = useNavigation();
 
   useEffect(() => { fetchPets(); }, []);
@@ -72,13 +73,27 @@ const VetBookingScreen = () => {
 
   const fetchSlots = async () => {
     setLoadingSlots(true);
-    setSelectedSlot(null);
-    setLockedBookingId(null);
+    // Don't clear selections here; let the UI handle it based on available slots.
+    // However, we should clear them if they are no longer valid for the new date.
     try {
       const data = await getAvailableSlots(selectedDate);
-      setAvailableSlots(Array.isArray(data) ? data : data.slots || []);
-    } catch { setAvailableSlots([]); }
-    finally { setLoadingSlots(false); }
+      const slots = Array.isArray(data) ? data : data.slots || [];
+      setAvailableSlots(slots);
+      
+      // If we had a selected slot, check if it's still "available" (which now includes our own locks)
+      if (selectedSlot) {
+        const timeStr = typeof selectedSlot === 'string' ? selectedSlot : selectedSlot.time;
+        const exists = slots.some(s => (typeof s === 'string' ? s : s.time) === timeStr);
+        if (!exists) {
+          setSelectedSlot(null);
+          setLockedBookingId(null);
+        }
+      }
+    } catch { 
+      setAvailableSlots([]); 
+      setSelectedSlot(null);
+      setLockedBookingId(null);
+    } finally { setLoadingSlots(false); }
   };
 
   const handleSlotPress = async (slot) => {
@@ -103,7 +118,7 @@ const VetBookingScreen = () => {
     if (!lockedBookingId || !selectedPet) return;
     setConfirming(true);
     try {
-      await confirmBooking(lockedBookingId, selectedPet);
+      await confirmBooking(lockedBookingId, selectedPet, symptoms);
       Alert.alert('🩺 Booked!', 'Vet appointment confirmed!', [
         { text: 'Great!', onPress: () => navigation.navigate('PetList') },
       ]);
@@ -213,12 +228,37 @@ const VetBookingScreen = () => {
           )}
         </View>
 
+        {/* Pre-Visit Form (Symptoms) */}
+        {lockedBookingId && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialIcons name="description" size={17} color={C.primary} />
+              <Text style={styles.sectionLabel}>PRE-VISIT SMART FORM</Text>
+            </View>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Describe symptoms or concerns (Optional)</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="E.g. Lethargy, loss of appetite, coughing..."
+                placeholderTextColor={C.outline}
+                multiline
+                numberOfLines={4}
+                value={symptoms}
+                onChangeText={setSymptoms}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+        )}
+
         {lockedBookingId && selectedPetName && (
           <View style={styles.summaryCard}>
             <View style={styles.summaryIcon}><MaterialIcons name="medical-services" size={22} color={C.secondary} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.summaryTitle}>Appointment Summary</Text>
-              <Text style={styles.summaryBody}>Veterinary checkup for {selectedPetName} at {formatTime(typeof selectedSlot === 'string' ? selectedSlot : selectedSlot.time)} on {new Date(selectedDate).toLocaleDateString()}.</Text>
+              <Text style={styles.summaryBody}>
+                Veterinary checkup for {selectedPetName} at {formatTime(typeof selectedSlot === 'string' ? selectedSlot : selectedSlot?.time)} on {new Date(selectedDate).toLocaleDateString()}.
+              </Text>
             </View>
           </View>
         )}
@@ -281,6 +321,9 @@ const styles = StyleSheet.create({
   confirmBtn: { backgroundColor: C.primary, height: 60, borderRadius: 99, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: C.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.32, shadowRadius: 14, elevation: 8 },
   confirmBtnOff: { backgroundColor: C.outlineVariant, shadowOpacity: 0, elevation: 0 },
   confirmBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  inputContainer: { backgroundColor: C.surfaceLowest, borderRadius: 16, padding: 16, marginTop: 8 },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: C.onSurfaceVariant, marginBottom: 10 },
+  textInput: { backgroundColor: C.surfaceLow, borderRadius: 12, padding: 12, fontSize: 14, color: C.onSurface, minHeight: 100, borderWidth: 1, borderColor: C.outlineVariant + '44' },
 });
 
 export default VetBookingScreen;
