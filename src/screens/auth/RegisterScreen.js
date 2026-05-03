@@ -25,14 +25,16 @@ const RegisterScreen = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   const { registerUser } = useContext(AuthContext);
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Missing Fields', 'Please fill in name, email, and password.');
+    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+      Alert.alert('Missing Fields', 'Please fill in all required fields.');
       return;
     }
     if (!isValidEmail(email)) {
@@ -40,11 +42,15 @@ const RegisterScreen = () => {
       return;
     }
     if (!isValidPassword(password)) {
-      Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
+      Alert.alert('Weak Password', 'Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character (e.g. @$!%*?&).');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Passwords Match', 'Passwords do not match. Please check again.');
       return;
     }
     if (phone.trim() && !isValidPhone(phone)) {
-      Alert.alert('Invalid Phone', 'Please enter a valid phone number or leave it blank.');
+      Alert.alert('Invalid Phone', 'Please enter a valid Sri Lankan phone number (e.g. 0771234567 or +94771234567).');
       return;
     }
     setLoading(true);
@@ -100,9 +106,20 @@ const RegisterScreen = () => {
             <Text style={styles.inputLabel}>Password</Text>
             <View style={styles.inputBox}>
               <MaterialIcons name="lock" size={18} color={C.outline} style={{ marginRight: 10 }} />
-              <TextInput style={[styles.input, { flex: 1 }]} value={password} onChangeText={setPassword} placeholder="Min. 6 characters" placeholderTextColor={C.outlineVariant} secureTextEntry={!showPw} />
+              <TextInput style={[styles.input, { flex: 1 }]} value={password} onChangeText={setPassword} placeholder="Min. 8 chars, 1 uppercase, 1 symbol" placeholderTextColor={C.outlineVariant} secureTextEntry={!showPw} />
               <TouchableOpacity onPress={() => setShowPw(!showPw)}>
                 <MaterialIcons name={showPw ? 'visibility-off' : 'visibility'} size={18} color={C.outline} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Confirm Password</Text>
+            <View style={styles.inputBox}>
+              <MaterialIcons name="lock-outline" size={18} color={C.outline} style={{ marginRight: 10 }} />
+              <TextInput style={[styles.input, { flex: 1 }]} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Re-type your password" placeholderTextColor={C.outlineVariant} secureTextEntry={!showConfirmPw} />
+              <TouchableOpacity onPress={() => setShowConfirmPw(!showConfirmPw)}>
+                <MaterialIcons name={showConfirmPw ? 'visibility-off' : 'visibility'} size={18} color={C.outline} />
               </TouchableOpacity>
             </View>
           </View>
