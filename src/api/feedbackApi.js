@@ -13,6 +13,11 @@ export const getAllFeedback = async (serviceType) => {
   return response.data;
 };
 
+export const submitFeedback = async (data) => {
+  const response = await axiosInstance.post("/feedbacks", data);
+  const data = response.data;
+  return data;
+};
 
 export const deleteFeedback = async (id) => {
   const response = await axiosInstance.delete(`/feedbacks/${id}`);
