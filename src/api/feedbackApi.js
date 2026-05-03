@@ -1,6 +1,10 @@
 import axiosInstance from "./axiosInstance";
 
-
+export const getAverageRatings = async () => {
+  const response = await axiosInstance.get("/feedbacks/average");
+  const data = response.data;
+  return data;
+};
 
 export const getAllFeedback = async (serviceType) => {
   const url = serviceType
