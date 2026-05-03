@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, ScrollView, StatusBar,
@@ -191,7 +191,7 @@ const BoardingBookingScreen = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="paw-outline" size={17} color={C.primary} />
-            <Text style={styles.sectionLabel}>WHO'S STAYING?</Text>
+            <Text style={styles.sectionLabel}>{"WHO'S STAYING?"}</Text>
           </View>
           {loadingPets ? (
             <ActivityIndicator color={C.primary} />
