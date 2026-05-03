@@ -8,6 +8,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { getPets } from '../../api/petApi';
 import { getAvailableSlots, lockSlot, confirmBooking, updateBooking } from '../../api/groomingApi';
+import { isValidPastDateString } from '../../utils/validators';
+
 
 const C = {
   primary: '#006850', primaryContainer: '#148367', onPrimaryContainer: '#effff6',
@@ -15,7 +17,7 @@ const C = {
   onSecondaryContainer: '#783d01', surface: '#faf9f8', surfaceHigh: '#e9e8e7',
   surfaceLow: '#f4f3f2', surfaceLowest: '#ffffff', onSurface: '#1a1c1c',
   onSurfaceVariant: '#3e4944', outline: '#6e7a74', outlineVariant: '#bdc9c3',
-  emeraldDark: '#052E25',
+  emeraldDark: '#052E25', error: '#ba1a1a',
 };
 
 const PET_COLORS = ['#148367', '#8e4e14', '#9f3a21', '#006850', '#783d01'];
@@ -168,6 +170,20 @@ const GroomingBookingScreen = () => {
       fetchSlots();
     } finally { setConfirming(false); }
   };
+  const handleDateChange = (text) => {
+    // Only allow digits and hyphens
+    const cleaned = text.replace(/[^0-9]/g, '');
+    let formatted = cleaned;
+    if (cleaned.length > 4) {
+      formatted = cleaned.slice(0, 4) + '-' + cleaned.slice(4);
+    }
+    if (cleaned.length > 6) {
+      formatted = formatted.slice(0, 7) + '-' + cleaned.slice(6, 8);
+    }
+    setLastGroomed(formatted.slice(0, 10));
+  };
+
+  const isDateValid = isValidPastDateString(lastGroomed);
 
   const toggleAddOn = (id) => {
     setSelectedAddOns(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
@@ -224,12 +240,18 @@ const GroomingBookingScreen = () => {
       </View>
       <Text style={[styles.stepTitle, { marginTop: 32 }]}>Last Grooming Date</Text>
       <TextInput 
-        style={styles.dateInput} 
+        style={[styles.dateInput, !isDateValid && lastGroomed && { borderColor: C.error || '#ba1a1a' }]} 
         placeholder="YYYY-MM-DD (Optional)" 
         value={lastGroomed} 
-        onChangeText={setLastGroomed}
+        onChangeText={handleDateChange}
         placeholderTextColor={C.outline}
+        keyboardType="numeric"
+        maxLength={10}
       />
+      {!isDateValid && lastGroomed && (
+        <Text style={styles.errorText}>Please enter a valid past date (YYYY-MM-DD)</Text>
+      )}
+
       <Text style={styles.inputHint}>Helps our groomers estimate the work needed.</Text>
     </View>
   );
@@ -364,10 +386,16 @@ const GroomingBookingScreen = () => {
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
         <TouchableOpacity 
-          style={[styles.nextBtn, (step === 1 && !selectedPet) || (step === 4 && !selectedSlot) ? styles.nextBtnDisabled : null]} 
+          style={[
+            styles.nextBtn, 
+            (step === 1 && !selectedPet) || 
+            (step === 2 && !isDateValid) || 
+            (step === 4 && !selectedSlot) ? styles.nextBtnDisabled : null
+          ]} 
           onPress={step === 5 ? handleConfirm : nextStep}
-          disabled={confirming || (step === 1 && !selectedPet) || (step === 4 && !selectedSlot)}
+          disabled={confirming || (step === 1 && !selectedPet) || (step === 2 && !isDateValid) || (step === 4 && !selectedSlot)}
         >
+
           {confirming ? <ActivityIndicator color="#fff" /> : (
             <>
               <Text style={styles.nextBtnText}>{step === 5 ? 'Confirm Booking' : 'Continue'}</Text>
@@ -441,6 +469,8 @@ const styles = StyleSheet.create({
   nextBtnText: { color: '#fff', fontSize: 18, fontWeight: '800' },
   emptyState: { padding: 40, alignItems: 'center' },
   emptyText: { color: C.outline, fontSize: 16 },
+  errorText: { color: '#ba1a1a', fontSize: 12, marginTop: 4, marginLeft: 4, fontWeight: '600' },
 });
+
 
 export default GroomingBookingScreen;
