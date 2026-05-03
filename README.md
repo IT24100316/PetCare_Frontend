@@ -1,50 +1,157 @@
-# Welcome to your Expo app 👋
+# 🐾 PawCare
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A comprehensive **React Native** mobile application for pet care management, built with [Expo](https://expo.dev). PawCare connects pet owners with veterinary services, grooming, boarding, and pet shops — all in one place.
 
-## Get started
+---
 
-1. Install dependencies
+## ✨ Features
+
+- 🔐 **Authentication** — Secure login and registration with role-based access (Pet Owner, Vet, Groomer, Shop Staff, Admin)
+- 🐕 **Pet Management** — Add, edit, and manage pet profiles with detailed information
+- 📅 **Booking System** — Book appointments for grooming, veterinary consultations, and boarding services
+- 🛒 **Pet Shop** — Browse products, manage cart, and track orders
+- 🤖 **AI Symptom Checker** — Check pet symptoms using integrated AI assistance
+- 💬 **Chat & Messaging** — In-app messaging between users and service providers
+- 📝 **Medical Records** — Vets can manage and update pet medical records
+- ⭐ **Feedback System** — Submit and view ratings and feedback for services
+- 🔔 **Role-based Dashboards** — Tailored dashboards for users, vets, groomers, shop owners, and admins
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | [Expo](https://expo.dev) + [React Native](https://reactnative.dev) |
+| Navigation | React Navigation (Native Stack + Bottom Tabs) |
+| State Management | React Context API |
+| Networking | Axios |
+| Storage | AsyncStorage + Expo SecureStore |
+| UI | React Native + Expo Vector Icons |
+| Animations | React Native Reanimated |
+| Image Handling | Expo Image + Image Picker |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (LTS recommended)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [Expo CLI](https://docs.expo.dev/get-started/installation/)
+- Android Studio / Xcode (for emulator/simulator) or the Expo Go app on your physical device
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/yourusername/PetCare_Frontend.git
+   cd PetCare_Frontend
+   ```
+
+2. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. **Start the development server**
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+4. **Run the app**
+   - Press `i` for iOS simulator
+   - Press `a` for Android emulator
+   - Scan the QR code with **Expo Go** app on your physical device
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 📁 Project Structure
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+PetCare_Frontend/
+├── app/                    # Expo Router entry (file-based routing)
+├── assets/                 # Images, fonts, and static assets
+├── components/             # Reusable UI components
+├── constants/              # Theme and app constants
+├── hooks/                  # Custom React hooks
+├── scripts/                # Utility scripts
+├── src/
+│   ├── api/               # API service functions (Axios)
+│   ├── components/        # Shared components
+│   ├── context/           # React Context providers (Auth, etc.)
+│   ├── navigation/        # Navigation setup & navigators
+│   │   ├── AppNavigator.js
+│   │   ├── UserNavigator.js
+│   │   ├── VetNavigator.js
+│   │   └── ShopOwnerNavigator.js
+│   ├── screens/           # App screens organized by feature
+│   │   ├── auth/          # Login, Register, Welcome
+│   │   ├── pet/           # Pet profiles & management
+│   │   ├── booking/       # Grooming, Vet, Boarding bookings
+│   │   ├── shop/          # Product list, Cart
+│   │   ├── user/          # Orders, Bookings, Profile
+│   │   ├── vet/           # Vet dashboard & medical records
+│   │   ├── staff/         # Groomer, Shop, Sitter dashboards
+│   │   ├── ai/            # AI Symptom Checker
+│   │   ├── feedback/      # Feedback & ratings
+│   │   └── admin/         # Admin dashboard
+│   └── utils/             # Helper functions & validators
+├── App.js                  # App entry point
+├── app.json               # Expo configuration
+├── eas.json               # EAS Build configuration
+└── package.json
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## 🧪 Available Scripts
 
-To learn more about developing your project with Expo, look at the following resources:
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start the Expo development server |
+| `npm run android` | Start for Android |
+| `npm run ios` | Start for iOS |
+| `npm run web` | Start for web |
+| `npm run lint` | Run ESLint |
+| `npm run reset-project` | Reset to a fresh Expo project |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## 🔗 Backend
 
-Join our community of developers creating universal apps.
+This frontend connects to a backend API. Make sure the backend server is running and update the API base URL in `src/api/` files accordingly.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 📱 Screenshots
+
+> *Add your app screenshots here*
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 👤 Author
+
+Developed with ❤️ for pets everywhere.
