@@ -24,6 +24,7 @@ export const confirmBooking = async (bookingId, petId, extras = {}) => {
   return response.data;
 };
 
+
 // Update a pending booking (user edits before groomer approval)
 export const updateBooking = async (bookingId, updates) => {
   const response = await axiosInstance.patch(`/bookings/grooming/${bookingId}/update`, updates);
