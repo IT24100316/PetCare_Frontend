@@ -106,7 +106,7 @@ const SitterDashboardScreen = () => {
     fetchCapacity();
   }, []);
 
-  useEffect(() => { refreshAll(); }, []);
+  useEffect(() => { refreshAll(); }, [refreshAll]);
 
   const handleStatusUpdate = async (id, status, petName, dates) => {
     const dateLabel = dates && dates.length > 0
